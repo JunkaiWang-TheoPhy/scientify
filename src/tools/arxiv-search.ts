@@ -4,6 +4,7 @@ import { Result } from "./result.js";
 const ARXIV_API_URL = "https://export.arxiv.org/api/query";
 const DEFAULT_MAX_RESULTS = 10;
 const MAX_RESULTS_LIMIT = 50;
+const ABSTRACT_MAX_CHARS = 300;
 
 export const ArxivSearchSchema = Type.Object({
   query: Type.String({ description: "Search query for arXiv papers (e.g. 'graph neural network')." }),
@@ -164,7 +165,9 @@ export function createArxivSearchTool() {
         papers: papers.map((p) => ({
           title: p.title,
           authors: p.authors,
-          abstract: p.abstract,
+          abstract: p.abstract.length > ABSTRACT_MAX_CHARS
+            ? p.abstract.slice(0, ABSTRACT_MAX_CHARS) + "…"
+            : p.abstract,
           arxiv_id: p.arxivId,
           pdf_url: p.pdfUrl,
           published: p.published,

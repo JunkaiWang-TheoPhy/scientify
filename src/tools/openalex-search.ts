@@ -2,8 +2,8 @@ import { Type } from "@sinclair/typebox";
 import { Result } from "./result.js";
 
 const OPENALEX_API = "https://api.openalex.org/works";
-const DEFAULT_MAX_RESULTS = 20;
-const MAX_RESULTS_LIMIT = 100;
+const DEFAULT_MAX_RESULTS = 15;
+const MAX_RESULTS_LIMIT = 50;
 
 export const OpenAlexSearchToolSchema = Type.Object({
   query: Type.String({
@@ -11,7 +11,7 @@ export const OpenAlexSearchToolSchema = Type.Object({
   }),
   max_results: Type.Optional(
     Type.Number({
-      description: "Maximum number of results (1-100). Default: 20.",
+      description: "Maximum number of results (1-50). Default: 15.",
       minimum: 1,
       maximum: MAX_RESULTS_LIMIT,
     }),

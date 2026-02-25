@@ -18,22 +18,25 @@ type HookResult = {
 };
 
 /**
- * Concise research mode prompt.
- * Injected only on session first message; persists via message history.
- * Complements <available_skills> XML (which already lists skill descriptions).
+ * Research mode prompt injected into every conversation.
  */
-const RESEARCH_MODE_PROMPT = `[Scientify] For academic research tasks, match a skill from <available_skills> and read its SKILL.md before acting. Research projects are managed under $W/projects/<topic>/.`;
+const RESEARCH_MODE_PROMPT = `[Scientify]
+Skills: match research tasks to <available_skills>; read SKILL.md before acting.
+Workspace: $W/projects/<topic>/. Check /research-status before writing. Active project in $W/projects/.active.
+  survey/ — search_terms.json, raw_results.json, filtered_papers.json, clusters.json, report.md (literature-survey)
+  papers/ — organized by cluster direction, each with paper_list.md + {arxiv_id}/ .tex sources (literature-survey)
+  notes/ — per-paper deep analysis paper_{id}.md (research-survey). survey_res.md = method comparison table.
+  ideas/ — gaps.md, idea_1..5.md, selected_idea.md, summary.md (idea-generation)
+  review/ — reading_plan.md, notes/{id}.md, comparison.md, taxonomy.md, draft.md, bibliography.bib (write-review-paper)
+  plan_res.md (research-plan) → project/ + ml_res.md (research-implement) → iterations/judge_v*.md (research-review) → experiment_res.md (research-experiment)
+Rules: file exists = step done (skip). Outputs immutable unless user asks. project/ mutable during review loop.
+Rigor: read first, think second, answer third. Never fabricate references or results. Every claim needs a source. Say "I don't know" when uncertain. Read actual papers, not just abstracts. Ground ideas in real papers.`;
 
 /**
- * Creates the research mode hook.
- * Only injects on the first message of a session (messages array empty).
- * Subsequent messages retain it via conversation history.
+ * Injects on every prompt build (survives compaction).
  */
 export function createResearchModeHook() {
-  return (event: HookEvent, _context: HookContext): HookResult => {
-    if (!event.messages || event.messages.length === 0) {
-      return { prependContext: RESEARCH_MODE_PROMPT };
-    }
-    return {};
+  return (_event: HookEvent, _context: HookContext): HookResult => {
+    return { prependContext: RESEARCH_MODE_PROMPT };
   };
 }

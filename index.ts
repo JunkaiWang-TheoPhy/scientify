@@ -17,6 +17,12 @@ import { createUnpaywallDownloadTool } from "./src/tools/unpaywall-download.js";
 import { createAutoUpdaterService } from "./src/services/auto-updater.js";
 import { createSkillInjectionHook } from "./src/hooks/inject-skill.js";
 import { createResearchModeHook } from "./src/hooks/research-mode.js";
+import {
+  createScientifyMessageTrackerHook,
+  createScientifySignaturePromptHook,
+  createScientifyUsageCleanupHook,
+  createScientifyUsageTrackerHook,
+} from "./src/hooks/scientify-signature.js";
 
 // Default: check every hour
 const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
@@ -104,11 +110,19 @@ export default function register(api: OpenClawPluginApi) {
   // up to locate openclaw.plugin.json, which is always at the plugin root.
   api.on("before_tool_call", createSkillInjectionHook(path.dirname(api.source)));
 
-  // Inject research mode prompt into all conversations.
-  // This reminds the agent to use research skills for academic tasks.
-  // The agent decides whether to use skills based on task type.
-  api.on("before_prompt_build", createResearchModeHook(), {
+  // Track whether a session actually used Scientify skills/tools.
+  // The signature is prompt-driven (model-generated), not post-processed.
+  api.on("before_tool_call", createScientifyUsageTrackerHook());
+  api.on("message_received", createScientifyMessageTrackerHook());
+  api.on("session_end", createScientifyUsageCleanupHook());
+
+  // Inject prompts at agent start so they affect the current turn.
+  // OpenClaw runs this hook before model execution and merges prependContext.
+  api.on("before_agent_start", createResearchModeHook(), {
     priority: 100, // High priority to inject early
+  });
+  api.on("before_agent_start", createScientifySignaturePromptHook(), {
+    priority: 90,
   });
 
   api.logger.info("Scientify plugin loaded (research mode: always active)");

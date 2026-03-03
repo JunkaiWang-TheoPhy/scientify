@@ -1,3 +1,9 @@
+## [1.10.0](https://github.com/tsingyuai/scientify/compare/v1.9.0...v1.10.0) (2026-03-03)
+
+### Features
+
+* add subscription mode ([bc08627](https://github.com/tsingyuai/scientify/commit/bc08627b0fb9d394d30ef0ac4c71c550d7344c85))
+
 ## [1.9.0](https://github.com/tsingyuai/scientify/compare/v1.8.0...v1.9.0) (2026-03-02)
 
 ### Features

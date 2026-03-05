@@ -1,3 +1,9 @@
+## [1.10.1](https://github.com/tsingyuai/scientify/compare/v1.10.0...v1.10.1) (2026-03-05)
+
+### Bug Fixes
+
+* support webui/tui delivery aliases for scheduled jobs ([4f57ce4](https://github.com/tsingyuai/scientify/commit/4f57ce4a833e4149e04383dea06664368833540e))
+
 ## [1.10.0](https://github.com/tsingyuai/scientify/compare/v1.9.0...v1.10.0) (2026-03-03)
 
 ### Features

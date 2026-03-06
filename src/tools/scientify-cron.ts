@@ -93,6 +93,12 @@ type CronToolDeps = {
   logger: PluginLogger;
 };
 
+const RESEARCH_MESSAGE_HINT_RE =
+  /\b(research|literature|paper|papers|survey|arxiv|openalex|citation|digest|summary|track|tracking|monitor|update|incremental|report|plan)\b|文献|论文|调研|研究|综述|检索|引用|增量|更新|跟踪|追踪|推送|简报|规划/u;
+
+const RESEARCH_WORKFLOW_VERB_RE =
+  /\b(search|survey|analy[sz]e|filter|track|monitor|update|summari[sz]e|report|plan)\b|检索|调研|筛选|跟踪|追踪|更新|总结|汇报|规划/u;
+
 function readStringParam(params: Record<string, unknown>, key: string): string | undefined {
   const value = params[key];
   if (value === undefined || value === null) return undefined;
@@ -165,17 +171,45 @@ function getResultError(result: PluginCommandResult): string | undefined {
   return maybe && maybe.length > 0 ? maybe : undefined;
 }
 
+function shouldPromoteMessageToTopic(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  if (!RESEARCH_MESSAGE_HINT_RE.test(text)) return false;
+  if (RESEARCH_WORKFLOW_VERB_RE.test(text)) return true;
+  return text.length >= 24;
+}
+
+function deriveTopicFromResearchMessage(message: string): string {
+  let text = message.trim();
+  text = text.replace(/^scheduled reminder task\.?\s*/i, "");
+  text = text.replace(/^please send this reminder now:\s*/i, "");
+  text = text.replace(/^["']|["']$/g, "");
+  text = text.replace(/^这是一个.{0,24}提醒[：:，,\s]*/u, "");
+  text = text.replace(/^这是一条.{0,24}提醒[：:，,\s]*/u, "");
+  text = text.replace(/^提醒(?:我|你)?(?:一下|一声)?[：:，,\s]*/u, "");
+  text = text.replace(/^请(?:你)?(?:检查|查看|关注)\s*/u, "");
+  text = text.replace(/[。.!]+$/u, "");
+  const normalized = text.trim();
+  return normalized.length > 0 ? normalized : message.trim();
+}
+
 function buildSubscribeArgs(params: Record<string, unknown>): string {
   const parts: string[] = [];
   const schedule = readStringParam(params, "schedule") ?? "daily 09:00 Asia/Shanghai";
   parts.push(schedule);
 
-  const topic = readStringParam(params, "topic");
+  let topic = readStringParam(params, "topic");
+  let message = readStringParam(params, "message");
+
+  if (!topic && message && shouldPromoteMessageToTopic(message)) {
+    topic = deriveTopicFromResearchMessage(message);
+    message = undefined;
+  }
+
   if (topic) {
     parts.push("--topic", quoteArg(topic));
   }
 
-  const message = readStringParam(params, "message");
   if (message) {
     parts.push("--message", quoteArg(message));
   }

@@ -63,6 +63,9 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
         buildScheduledTaskMessage(options, parsed.kind, stateScopeKey),
         "--timeout-seconds",
         "1800",
+        "--thinking",
+        "low",
+        "--light-context",
       ];
 
       if (delivery.mode === "none") {

@@ -38,6 +38,7 @@ Routing rules:
 
 - Research digest / paper tracking request: pass `topic`, leave `message` unset.
 - Plain reminder request: pass `message`, do not set `topic`.
+- If request mentions literature/papers/research updates, do not downgrade it to a plain reminder even when sentence contains "remind".
 - If request is ambiguous, ask one concise clarification question before tool call.
 - For recurring research subscriptions, prefer setting lightweight preferences:
   - `max_papers` (default 3)

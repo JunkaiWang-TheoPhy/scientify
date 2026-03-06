@@ -8,6 +8,9 @@ import {
 import { formatScoreWeights, resolveCandidatePool } from "./parse.js";
 import type { ScheduleSpec, SubscriptionOptions } from "./types.js";
 
+const RESEARCH_WORKFLOW_VERB_RE =
+  /\b(search|survey|analy[sz]e|filter|track|monitor|update|summari[sz]e|report|plan)\b|检索|调研|筛选|跟踪|追踪|更新|总结|汇报|规划/u;
+
 function normalizeReminderText(raw: string): string {
   let text = raw.trim();
   text = text.replace(/^(please\s+)?remind\s+(me|us|you)\s+(to\s+)?/i, "");
@@ -23,6 +26,28 @@ function inferReminderMessageFromTopic(topic?: string): string | undefined {
   if (!REMINDER_HINT_RE.test(trimmed)) return undefined;
   if (RESEARCH_HINT_RE.test(trimmed)) return undefined;
   return normalizeReminderText(trimmed);
+}
+
+function shouldPromoteMessageToResearchTopic(message: string): boolean {
+  const trimmed = message.trim();
+  if (!trimmed) return false;
+  if (!RESEARCH_HINT_RE.test(trimmed)) return false;
+  if (RESEARCH_WORKFLOW_VERB_RE.test(trimmed)) return true;
+  return trimmed.length >= 24;
+}
+
+function deriveResearchTopicFromMessage(message: string): string {
+  let text = message.trim();
+  text = text.replace(/^scheduled reminder task\.?\s*/i, "");
+  text = text.replace(/^please send this reminder now:\s*/i, "");
+  text = text.replace(/^["']|["']$/g, "");
+  text = text.replace(/^这是一个.{0,24}提醒[：:，,\s]*/u, "");
+  text = text.replace(/^这是一条.{0,24}提醒[：:，,\s]*/u, "");
+  text = text.replace(/^提醒(?:我|你)?(?:一下|一声)?[：:，,\s]*/u, "");
+  text = text.replace(/^请(?:你)?(?:检查|查看|关注)\s*/u, "");
+  text = text.replace(/[。.!]+$/u, "");
+  const normalized = text.trim();
+  return normalized.length > 0 ? normalized : message.trim();
 }
 
 function buildPreferencePayload(options: Pick<SubscriptionOptions, "maxPapers" | "recencyDays" | "sources">): {
@@ -48,7 +73,12 @@ export function buildScheduledTaskMessage(
   scopeKey: string,
 ): string {
   const customMessage = options.message?.trim();
-  if (customMessage) {
+  const promotedTopic =
+    !options.topic && customMessage && shouldPromoteMessageToResearchTopic(customMessage)
+      ? deriveResearchTopicFromMessage(customMessage)
+      : undefined;
+
+  if (customMessage && !promotedTopic) {
     return [
       "Scheduled reminder task.",
       `Please send this reminder now: \"${customMessage}\"`,
@@ -65,7 +95,7 @@ export function buildScheduledTaskMessage(
     ].join("\n");
   }
 
-  const trimmedTopic = options.topic?.trim();
+  const trimmedTopic = (options.topic ?? promotedTopic)?.trim();
   if (!trimmedTopic) {
     return DEFAULT_CRON_PROMPT;
   }
@@ -151,10 +181,11 @@ export function buildScheduledTaskMessage(
     `7) Select at most ${preferences.max_papers} top-ranked unseen papers. If selected > 0, call \`scientify_literature_state\` with status \`ok\` using: ${recordTemplate}`,
     "8) If incremental selection is empty, run one fallback representative pass (ignore `exclude_paper_ids` once) and select best representative papers.",
     `9) If fallback returns papers, call \`scientify_literature_state\` with status \`fallback_representative\` using: ${recordFallbackTemplate}`,
-    "10) In user-facing output, do not expose score/reason unless explicitly requested.",
-    "11) If both incremental and fallback passes are empty, call record with empty papers using:",
+    "10) Output a compact progress report for this cycle: what changed, what matters, and a concrete plan for the next 1 hour.",
+    "11) Keep user-facing output concise; do not expose raw score/reason unless explicitly requested.",
+    "12) If both incremental and fallback passes are empty, call record with empty papers using:",
     `${recordEmptyTemplate}`,
-    "Then reply exactly: `No new literature found.`",
+    "Then still return a useful progress status with next-hour actions (instead of only a generic reminder).",
   ].join("\n");
 }
 

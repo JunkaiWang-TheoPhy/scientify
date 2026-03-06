@@ -1,3 +1,9 @@
+## [1.11.0](https://github.com/tsingyuai/scientify/compare/v1.10.3...v1.11.0) (2026-03-06)
+
+### Features
+
+* add project-scoped persistent knowledge state with quality gates ([9c15bfc](https://github.com/tsingyuai/scientify/commit/9c15bfcefb968a65ed5252b79f5d6d1fb74baf86))
+
 ## [1.10.3](https://github.com/tsingyuai/scientify/compare/v1.10.2...v1.10.3) (2026-03-06)
 
 ### Bug Fixes

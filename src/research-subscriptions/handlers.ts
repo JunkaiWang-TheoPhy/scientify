@@ -122,6 +122,7 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
         `- Name: \`${jobName}\``,
         `- Enabled: \`${persisted?.enabled === false ? "no" : "yes"}\``,
         `- Schedule: \`${parsed.display}\``,
+        `- Project: \`${options.projectId ?? "auto (.active or generated)"}\``,
         `- Delivery: \`${delivery.display}\``,
         `- Incremental Scope: \`${stateScopeKey}\``,
         "",

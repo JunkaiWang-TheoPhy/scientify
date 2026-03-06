@@ -28,6 +28,11 @@ export const ScientifyCronToolSchema = Type.Object({
       description: "Optional research topic override used to build the scheduled task prompt.",
     }),
   ),
+  project: Type.Optional(
+    Type.String({
+      description: "Optional project id for knowledge_state persistence.",
+    }),
+  ),
   message: Type.Optional(
     Type.String({
       description:
@@ -208,6 +213,11 @@ function buildSubscribeArgs(params: Record<string, unknown>): string {
 
   if (topic) {
     parts.push("--topic", quoteArg(topic));
+  }
+
+  const project = readStringParam(params, "project");
+  if (project) {
+    parts.push("--project", quoteArg(project));
   }
 
   if (message) {

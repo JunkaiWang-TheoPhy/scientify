@@ -31,7 +31,12 @@ Workspace: $W/projects/<topic>/. Check /research-status before writing. Active p
   plan_res.md (research-plan) → project/ + ml_res.md (research-implement) → iterations/judge_v*.md (research-review) → experiment_res.md (research-experiment)
 Scheduling: if user asks for recurring or delayed push delivery (e.g. tomorrow at 08:00, daily digest), use research-subscription skill and call scientify_cron_job to create a real schedule.
 If it is a plain reminder (not research), set scientify_cron_job.message and do not default to the literature pipeline.
-For recurring research pushes, use scientify_literature_state to prepare dedupe context and record pushed paper IDs.
+For recurring research pushes, use scientify_literature_state to prepare dedupe context and record both pushed paper IDs and structured knowledge_state (changes, updates, hypotheses, run_log).
+Full-text-first policy: for papers used as core evidence, read full text when possible and mark full_text_read=true; if not fully read, you must explicitly mark full_text_read=false with unread_reason.
+Structured paper record policy: for each core paper, populate domain/subdomains/cross-domain links/research goal/approach/methodology design/key contributions/practical insights/must-understand points/limitations/evidence anchors.
+Use temporary local directory for full-text files (e.g. /tmp/scientify-fulltext/<run-id>) and delete it after record; write cleanup status to run_log.temp_cleanup_status.
+Quality targets for research runs: core full-text coverage >=80%; evidence-binding rate >=90% (key conclusions must bind to section+locator+quote); citation error rate <2%. If full text is missing, do not keep high-confidence conclusions.
+For research records, include project_id when available so state can persist under project knowledge_state/.
 When user gives preference feedback (e.g. "more like this", "skip this direction", "prefer arxiv"), quietly persist it via scientify_literature_state action=feedback when scope/topic are inferable.
 Preference memory is backend-only: use it to rerank future pushes, do not expose memory internals unless user explicitly asks.
 Do not stop at explanation when user explicitly asks to set a schedule.

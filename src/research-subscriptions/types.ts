@@ -63,6 +63,7 @@ export type SubscriptionOptions = {
   scheduleTokens: string[];
   channelOverride?: string;
   toOverride?: string;
+  projectId?: string;
   noDeliver: boolean;
   topic?: string;
   message?: string;

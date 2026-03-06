@@ -385,6 +385,7 @@ export function parseSubscribeOptions(rawArgs: string | undefined): Subscription
   const scheduleTokens: string[] = [];
   let channelOverride: string | undefined;
   let toOverride: string | undefined;
+  let projectId: string | undefined;
   let topic: string | undefined;
   let message: string | undefined;
   let maxPapers: number | undefined;
@@ -419,6 +420,19 @@ export function parseSubscribeOptions(rawArgs: string | undefined): Subscription
 
     if (token === "--no-deliver") {
       noDeliver = true;
+      continue;
+    }
+
+    if (token === "--project") {
+      const value = tokens[i + 1];
+      if (!value) {
+        return { error: "Error: `--project` expects a value, e.g. `--project battery-rul`." };
+      }
+      if (!/^[A-Za-z0-9_-]+$/.test(value)) {
+        return { error: "Error: `--project` only allows letters, numbers, `_`, and `-`." };
+      }
+      projectId = value;
+      i++;
       continue;
     }
 
@@ -537,6 +551,7 @@ export function parseSubscribeOptions(rawArgs: string | undefined): Subscription
     scheduleTokens,
     channelOverride,
     toOverride,
+    projectId,
     noDeliver,
     topic,
     message,

@@ -336,8 +336,8 @@ openclaw gateway
 | `unpaywall_download` | 通过 Unpaywall API 按 DOI 下载开放获取 PDF。非 OA 论文跳过不报错。 |
 | `github_search` | 搜索 GitHub 仓库，返回仓库名、描述、star 数、URL。支持语言过滤和排序。 |
 | `paper_browser` | 分页浏览大型论文文件（.tex/.md），避免一次性加载数千行到上下文。返回指定行范围和导航信息。 |
-| `scientify_cron_job` | 由模型管理 Scientify 定时任务（`upsert`/`list`/`remove`）。主要参数：`action`、`scope`、`schedule`、`topic`、`message`、`max_papers`、`recency_days`、`candidate_pool`、`score_weights`、`sources`、`channel`、`to`、`no_deliver`、`job_id`。 |
-| `scientify_literature_state` | 订阅增量状态工具：`prepare` 获取去重上下文（含记忆提示）、`record` 记录已推送论文、`feedback` 写入轻量偏好记忆、`status` 查看状态与可追溯日志。 |
+| `scientify_cron_job` | 由模型管理 Scientify 定时任务（`upsert`/`list`/`remove`）。主要参数：`action`、`scope`、`schedule`、`topic`、`project`、`message`、`max_papers`、`recency_days`、`candidate_pool`、`score_weights`、`sources`、`channel`、`to`、`no_deliver`、`job_id`。 |
+| `scientify_literature_state` | 订阅增量状态工具：`prepare` 获取去重上下文（含记忆提示）、`record` 记录已推送论文 + 项目级 `knowledge_state` 产物（含 `paper_notes` 深读字段与全文临时清理日志）、`feedback` 写入轻量偏好记忆、`status` 查看状态与可追溯日志。 |
 
 ### Commands（直接执行，不经 LLM）
 
@@ -349,7 +349,7 @@ openclaw gateway
 | `/projects` | 列出所有项目 |
 | `/project-switch <id>` | 切换当前项目 |
 | `/project-delete <id>` | 删除项目 |
-| `/research-subscribe ...` | 创建/更新定时 Scientify 任务（支持 `daily`、`weekly`、`every`、`at`、`cron`；可选参数：`--channel`、`--to`、`--topic`、`--message`、`--max-papers`、`--recency-days`、`--candidate-pool`、`--score-weights`、`--sources`、`--no-deliver`） |
+| `/research-subscribe ...` | 创建/更新定时 Scientify 任务（支持 `daily`、`weekly`、`every`、`at`、`cron`；可选参数：`--channel`、`--to`、`--topic`、`--project`、`--message`、`--max-papers`、`--recency-days`、`--candidate-pool`、`--score-weights`、`--sources`、`--no-deliver`） |
 | `/research-subscriptions` | 查看你的 Scientify 定时任务 |
 | `/research-unsubscribe [job-id]` | 取消你的 Scientify 定时任务（或删除指定任务） |
 
@@ -360,6 +360,7 @@ openclaw gateway
 - `/research-subscribe weekly mon 09:30 --channel telegram --to 123456789`
 - `/research-subscribe at 2m --channel webui`（`webui`/`tui` 是 `last` 的别名）
 - `/research-subscribe daily 08:00 --topic "LLM alignment"`
+- `/research-subscribe daily 08:00 --topic "LLM alignment" --project llm-alignment`
 - `/research-subscribe daily 08:00 --topic "LLM alignment" --max-papers 5 --recency-days 30 --sources arxiv,openalex`
 - `/research-subscribe daily 08:00 --topic "LLM alignment" --candidate-pool 12 --score-weights relevance:45,novelty:20,authority:25,actionability:10`
 - `/research-subscribe at 1m --message "Time to drink coffee."`
@@ -371,9 +372,14 @@ openclaw gateway
 - 提醒兜底：如果 `topic` 看起来是普通提醒（例如“提醒我睡觉”），Scientify 会自动按提醒消息处理，不走文献流水线。
 - 一次性研究任务（`at ... --topic ...`）使用“代表论文聚焦检索”；周期任务（`daily/weekly/every/cron`）保持“增量追踪”模式。
 - 周期增量模式会先构建候选池并评分后再选 Top-K；若本轮无“未推送新文献”，会自动再跑一轮代表性回退检索，再决定是否返回空结果。
+- 默认 `max_papers` 为 5（可用 `--max-papers` 覆盖）。
+- 研究记录内置质量闸门：核心论文全文覆盖率 >= 80%、证据绑定率 >= 90%、引用错误率 < 2%。未达标会自动降级为 `degraded_quality`。
 - 轻量偏好记忆（关键词/来源亲和）仅后台保存，不默认展示给用户，会静默影响后续排序。
-- 增量状态会持久化到 `~/.openclaw/workspace/scientify/`（`literature-state.json`、`literature-push-log.jsonl`），用于去重与可追溯。
-- 存储位置：订阅任务保存在 OpenClaw cron 存储中，不写入项目 workspace 文件。
+- 增量去重与偏好状态会持久化到 `~/.openclaw/workspace/scientify/`（`literature-state.json`、`literature-push-log.jsonl`）。
+- 项目级研究可追溯状态会持久化到 `~/.openclaw/workspace/projects/{project-id}/knowledge_state/`。
+- 全文优先的定时研究会在 `knowledge_state/paper_notes/` 中沉淀逐篇深读记录（领域/子领域/交叉领域/研究目标/方法设计/贡献/经验启发/必读要点/局限/证据锚点）。
+- 全文文件建议下载到临时目录并在每轮后清理，清理结果会写入 `knowledge_state` 的 run log。
+- 存储位置：订阅任务保存在 OpenClaw cron 存储中；知识状态产物写入项目 workspace 文件。
 - 全局查看：`openclaw cron list --all --json`
 
 ---
@@ -404,9 +410,17 @@ projects/
 │   ├── iterations/                # 审查迭代
 │   │   └── judge_v*.md
 │   ├── experiment_res.md          # 最终实验结果
-│   └── ideas/                     # 生成的想法
-│       ├── idea_*.md
-│       └── selected_idea.md
+│   ├── ideas/                     # 生成的想法
+│   │   ├── idea_*.md
+│   │   └── selected_idea.md
+│   └── knowledge_state/           # 定时研究状态产物
+│       ├── knowledge/
+│       ├── paper_notes/           # 逐篇深读沉淀
+│       ├── daily_changes/
+│       ├── hypotheses/
+│       ├── logs/
+│       ├── state.json
+│       └── events.jsonl
 └── another-project/
 ```
 

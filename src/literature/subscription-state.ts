@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rename, writeFile, appendFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { commitKnowledgeRun, readKnowledgeSummary } from "../knowledge-state/store.js";
+import type { KnowledgeStateInput, KnowledgeStateSummary } from "../knowledge-state/types.js";
 
 export type LightweightPreferences = {
   maxPapers: number;
@@ -61,6 +63,9 @@ export type RecordResult = {
   recordedPapers: number;
   totalKnownPapers: number;
   pushedAtMs: number;
+  projectId?: string;
+  streamKey?: string;
+  knowledgeStateSummary?: KnowledgeStateSummary;
 };
 
 export type RecentPaperSummary = {
@@ -121,6 +126,7 @@ type TopicState = {
   totalRuns: number;
   lastRunAtMs?: number;
   lastStatus?: string;
+  lastProjectId?: string;
 };
 
 type RootState = {
@@ -130,7 +136,7 @@ type RootState = {
 };
 
 const STATE_VERSION = 1 as const;
-const DEFAULT_MAX_PAPERS = 3;
+const DEFAULT_MAX_PAPERS = 5;
 const DEFAULT_SOURCES = ["openalex", "arxiv"];
 const MAX_MEMORY_NOTES = 30;
 const MAX_MEMORY_KEYS = 60;
@@ -581,6 +587,9 @@ function getOrCreateTopicState(
       if (otherLastRun > existingLastRun) {
         existing.lastRunAtMs = other.lastRunAtMs;
         existing.lastStatus = other.lastStatus;
+        if (other.lastProjectId) {
+          existing.lastProjectId = other.lastProjectId;
+        }
       } else if (!existing.lastStatus && other.lastStatus) {
         existing.lastStatus = other.lastStatus;
       }
@@ -672,6 +681,8 @@ export async function recordIncrementalPush(args: {
   preferences?: Partial<LightweightPreferences>;
   runId?: string;
   note?: string;
+  projectId?: string;
+  knowledgeState?: KnowledgeStateInput;
 }): Promise<RecordResult> {
   const root = await loadState();
   const topicState = getOrCreateTopicState(root, args.scope, args.topic, args.preferences);
@@ -713,6 +724,19 @@ export async function recordIncrementalPush(args: {
   topicState.totalRuns += 1;
   topicState.lastRunAtMs = now;
   topicState.lastStatus = args.status?.trim() || (recordedPapers > 0 ? "ok" : "empty");
+  const knowledgeCommitted = await commitKnowledgeRun({
+    projectId: args.projectId ?? topicState.lastProjectId,
+    scope: topicState.scope,
+    topic: topicState.topic,
+    topicKey: topicState.topicKey,
+    status: topicState.lastStatus,
+    runId: args.runId,
+    note: args.note,
+    papers: args.papers,
+    knowledgeState: args.knowledgeState,
+  });
+  topicState.lastStatus = knowledgeCommitted.summary.lastStatus ?? topicState.lastStatus;
+  topicState.lastProjectId = knowledgeCommitted.projectId;
 
   await saveState(root);
 
@@ -722,7 +746,9 @@ export async function recordIncrementalPush(args: {
     topic: topicState.topic,
     topicKey: topicState.topicKey,
     status: topicState.lastStatus,
-    runId: args.runId,
+    runId: knowledgeCommitted.runId,
+    projectId: knowledgeCommitted.projectId,
+    streamKey: knowledgeCommitted.streamKey,
     preferences: topicState.preferences,
     recordedPapers,
     papers: args.papers.map((paper) => ({
@@ -733,6 +759,7 @@ export async function recordIncrementalPush(args: {
       ...(paper.reason ? { reason: paper.reason.trim() } : {}),
     })),
     note: args.note,
+    knowledgeStateSummary: knowledgeCommitted.summary,
   });
 
   return {
@@ -744,6 +771,9 @@ export async function recordIncrementalPush(args: {
     recordedPapers,
     totalKnownPapers: Object.keys(topicState.pushedPapers).length,
     pushedAtMs: now,
+    projectId: knowledgeCommitted.projectId,
+    streamKey: knowledgeCommitted.streamKey,
+    knowledgeStateSummary: knowledgeCommitted.summary,
   };
 }
 
@@ -832,10 +862,30 @@ export async function recordUserFeedback(args: {
 export async function getIncrementalStateStatus(args: {
   scope: string;
   topic: string;
-}): Promise<PrepareResult & { totalRuns: number; lastStatus?: string; recentPapers: RecentPaperSummary[] }> {
+  projectId?: string;
+}): Promise<
+  PrepareResult & {
+    totalRuns: number;
+    lastStatus?: string;
+    recentPapers: RecentPaperSummary[];
+    knowledgeStateSummary?: KnowledgeStateSummary;
+    recentHypotheses: KnowledgeStateSummary["recentHypotheses"];
+    recentChangeStats: KnowledgeStateSummary["recentChangeStats"];
+    lastExplorationTrace: KnowledgeStateSummary["lastExplorationTrace"];
+  }
+> {
   const root = await loadState();
   const topicState = getOrCreateTopicState(root, args.scope, args.topic);
   const memory = ensureTopicMemoryState(topicState);
+  const knowledgeSummaryResult = await readKnowledgeSummary({
+    scope: topicState.scope,
+    topic: topicState.topic,
+    topicKey: topicState.topicKey,
+    projectId: args.projectId ?? topicState.lastProjectId,
+  });
+  if (knowledgeSummaryResult?.projectId) {
+    topicState.lastProjectId = knowledgeSummaryResult.projectId;
+  }
   await saveState(root);
 
   const excludePaperIds = sortPaperIdsByRecency(topicState.pushedPapers);
@@ -855,5 +905,9 @@ export async function getIncrementalStateStatus(args: {
     totalRuns: topicState.totalRuns,
     ...(topicState.lastStatus ? { lastStatus: topicState.lastStatus } : {}),
     recentPapers: recentPapersByRecency(topicState.pushedPapers, 10),
+    ...(knowledgeSummaryResult ? { knowledgeStateSummary: knowledgeSummaryResult.summary } : {}),
+    recentHypotheses: knowledgeSummaryResult?.summary.recentHypotheses ?? [],
+    recentChangeStats: knowledgeSummaryResult?.summary.recentChangeStats ?? [],
+    lastExplorationTrace: knowledgeSummaryResult?.summary.lastExplorationTrace ?? [],
   };
 }

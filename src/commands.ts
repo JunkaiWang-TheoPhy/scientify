@@ -83,6 +83,76 @@ function countFiles(dirPath: string, pattern?: RegExp): number {
   return count;
 }
 
+function getKnowledgeStateSummary(projectId: string): {
+  totalRuns: number;
+  totalHypotheses: number;
+  totalPaperNotes: number;
+  recentFullTextReadCount: number;
+  recentNotFullTextReadCount: number;
+  lastRunAtMs?: number;
+  lastStatus?: string;
+  streamCount: number;
+} | null {
+  const file = path.join(WORKSPACE_ROOT, projectId, "knowledge_state", "state.json");
+  if (!fs.existsSync(file)) return null;
+  try {
+    const raw = fs.readFileSync(file, "utf-8");
+    const parsed = JSON.parse(raw) as {
+      streams?: Record<
+        string,
+        {
+          totalRuns?: number;
+          totalHypotheses?: number;
+          paperNotes?: string[];
+          recentFullTextReadCount?: number;
+          recentNotFullTextReadCount?: number;
+          lastRunAtMs?: number;
+          lastStatus?: string;
+        }
+      >;
+    };
+    const streams = parsed.streams ?? {};
+    const streamEntries = Object.values(streams);
+    let totalRuns = 0;
+    let totalHypotheses = 0;
+    let totalPaperNotes = 0;
+    let recentFullTextReadCount = 0;
+    let recentNotFullTextReadCount = 0;
+    let lastRunAtMs = 0;
+    let lastStatus: string | undefined;
+    for (const stream of streamEntries) {
+      totalRuns += Number.isFinite(stream.totalRuns) ? Math.max(0, Math.floor(stream.totalRuns!)) : 0;
+      totalHypotheses += Number.isFinite(stream.totalHypotheses)
+        ? Math.max(0, Math.floor(stream.totalHypotheses!))
+        : 0;
+      totalPaperNotes += Array.isArray(stream.paperNotes) ? stream.paperNotes.length : 0;
+      recentFullTextReadCount += Number.isFinite(stream.recentFullTextReadCount)
+        ? Math.max(0, Math.floor(stream.recentFullTextReadCount!))
+        : 0;
+      recentNotFullTextReadCount += Number.isFinite(stream.recentNotFullTextReadCount)
+        ? Math.max(0, Math.floor(stream.recentNotFullTextReadCount!))
+        : 0;
+      const runAt = Number.isFinite(stream.lastRunAtMs) ? Math.floor(stream.lastRunAtMs!) : 0;
+      if (runAt >= lastRunAtMs) {
+        lastRunAtMs = runAt;
+        lastStatus = stream.lastStatus;
+      }
+    }
+    return {
+      totalRuns,
+      totalHypotheses,
+      totalPaperNotes,
+      recentFullTextReadCount,
+      recentNotFullTextReadCount,
+      ...(lastRunAtMs > 0 ? { lastRunAtMs } : {}),
+      ...(lastStatus ? { lastStatus } : {}),
+      streamCount: streamEntries.length,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * /research-status - Show workspace status
  */
@@ -93,6 +163,23 @@ export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandR
   let output = "📁 **Research Workspace Status**\n\n";
   output += `Root: \`${WORKSPACE_ROOT}\`\n`;
   output += `Active: ${activeProject ? `**${activeProject}**` : "(none)"}\n\n`;
+
+  if (activeProject) {
+    const knowledgeSummary = getKnowledgeStateSummary(activeProject);
+    if (knowledgeSummary) {
+      output += "**Knowledge State (active project):**\n";
+      output += `- streams: ${knowledgeSummary.streamCount}\n`;
+      output += `- total runs: ${knowledgeSummary.totalRuns}\n`;
+      output += `- total hypotheses: ${knowledgeSummary.totalHypotheses}\n`;
+      output += `- total paper notes: ${knowledgeSummary.totalPaperNotes}\n`;
+      output += `- recent full-text-read papers: ${knowledgeSummary.recentFullTextReadCount}\n`;
+      output += `- recent not-full-text-read papers: ${knowledgeSummary.recentNotFullTextReadCount}\n`;
+      output += `- last status: ${knowledgeSummary.lastStatus ?? "(unknown)"}\n`;
+      output += `- last run: ${
+        knowledgeSummary.lastRunAtMs ? new Date(knowledgeSummary.lastRunAtMs).toISOString() : "(none)"
+      }\n\n`;
+    }
+  }
 
   if (projects.length === 0) {
     output += "_No projects found. Use /idea-generation to create one._";

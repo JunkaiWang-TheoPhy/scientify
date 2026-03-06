@@ -7,6 +7,7 @@ import {
   type FeedbackSignal,
   type LightweightPreferences,
 } from "../literature/subscription-state.js";
+import type { KnowledgeStateInput } from "../knowledge-state/types.js";
 import { Result } from "./result.js";
 
 const PreferencesSchema = Type.Optional(
@@ -47,10 +48,138 @@ const PaperSchema = Type.Object({
   ),
 });
 
+const KnowledgePaperSchema = Type.Object({
+  id: Type.Optional(Type.String({ description: "Optional stable paper id." })),
+  title: Type.Optional(Type.String({ description: "Paper title." })),
+  url: Type.Optional(Type.String({ description: "Paper source URL." })),
+  source: Type.Optional(Type.String({ description: "Paper source name/domain." })),
+  published_at: Type.Optional(Type.String({ description: "Published time in ISO string." })),
+  score: Type.Optional(Type.Number({ description: "Optional score used in ranking." })),
+  reason: Type.Optional(Type.String({ description: "Optional rationale for selecting this paper." })),
+  summary: Type.Optional(Type.String({ description: "Optional short summary text." })),
+  evidence_ids: Type.Optional(Type.Array(Type.String({ description: "Optional evidence IDs for this paper." }))),
+  full_text_read: Type.Optional(Type.Boolean({ description: "Whether this paper was read from full text." })),
+  read_status: Type.Optional(
+    Type.String({
+      description: "Read status: fulltext | partial | metadata | unread.",
+    }),
+  ),
+  full_text_source: Type.Optional(Type.String({ description: "Where full text came from (e.g. arxiv_pdf)." })),
+  full_text_ref: Type.Optional(Type.String({ description: "Reference to full text location/path/URL." })),
+  unread_reason: Type.Optional(Type.String({ description: "Why full-text reading was not completed." })),
+  key_evidence_spans: Type.Optional(
+    Type.Array(Type.String({ description: "Short evidence excerpts/anchors from full text." })),
+  ),
+  domain: Type.Optional(Type.String({ description: "Primary research domain." })),
+  subdomains: Type.Optional(Type.Array(Type.String({ description: "Sub-research domains." }))),
+  cross_domain_links: Type.Optional(
+    Type.Array(Type.String({ description: "Cross-domain links/intersections." })),
+  ),
+  research_goal: Type.Optional(Type.String({ description: "Core research goal/question of this paper." })),
+  approach: Type.Optional(Type.String({ description: "What the paper does under that goal." })),
+  methodology_design: Type.Optional(Type.String({ description: "Method/experiment design summary." })),
+  key_contributions: Type.Optional(Type.Array(Type.String({ description: "Main contributions of this paper." }))),
+  practical_insights: Type.Optional(
+    Type.Array(Type.String({ description: "Practical takeaways or reusable experience." })),
+  ),
+  must_understand_points: Type.Optional(
+    Type.Array(Type.String({ description: "Critical points that must be understood after reading." })),
+  ),
+  limitations: Type.Optional(Type.Array(Type.String({ description: "Known limitations." }))),
+  evidence_anchors: Type.Optional(
+    Type.Array(
+      Type.Object({
+        section: Type.Optional(Type.String({ description: "Section title or identifier." })),
+        locator: Type.Optional(Type.String({ description: "Fine-grained locator, e.g. Eq.3/Table2/Page4." })),
+        claim: Type.String({ description: "Claim supported by this anchor." }),
+        quote: Type.Optional(Type.String({ description: "Short quote/excerpt supporting the claim." })),
+      }),
+    ),
+  ),
+});
+
+const ExplorationTraceSchema = Type.Object({
+  query: Type.String({ description: "Exploration query text." }),
+  reason: Type.Optional(Type.String({ description: "Why this exploration query was chosen." })),
+  source: Type.Optional(Type.String({ description: "Source used for this exploration step (e.g. arxiv/openalex)." })),
+  candidates: Type.Optional(Type.Number({ description: "Candidate count before filtering." })),
+  filtered_to: Type.Optional(Type.Number({ description: "Candidate count after filtering." })),
+  filtered_out_reasons: Type.Optional(
+    Type.Array(Type.String({ description: "Optional filtering reasons for dropped candidates." })),
+  ),
+  result_count: Type.Optional(Type.Number({ description: "Optional result count from this query." })),
+});
+
+const KnowledgeChangeSchema = Type.Object({
+  type: Type.String({ description: "One of NEW|CONFIRM|REVISE|BRIDGE." }),
+  statement: Type.String({ description: "Change statement." }),
+  evidence_ids: Type.Optional(Type.Array(Type.String({ description: "Evidence IDs for this change." }))),
+  topic: Type.Optional(Type.String({ description: "Optional topic affected by this change." })),
+});
+
+const KnowledgeUpdateSchema = Type.Object({
+  topic: Type.String({ description: "Topic name for this update." }),
+  op: Type.String({ description: "Update operation: append|revise|confirm|bridge." }),
+  content: Type.String({ description: "Update content text." }),
+  confidence: Type.Optional(Type.String({ description: "Optional confidence: low|medium|high." })),
+  evidence_ids: Type.Optional(Type.Array(Type.String({ description: "Evidence IDs for this update." }))),
+});
+
+const KnowledgeHypothesisSchema = Type.Object({
+  id: Type.Optional(Type.String({ description: "Optional hypothesis ID." })),
+  statement: Type.String({ description: "Hypothesis statement." }),
+  trigger: Type.String({ description: "Trigger type: GAP|BRIDGE|TREND|CONTRADICTION." }),
+  dependency_path: Type.Optional(Type.Array(Type.String({ description: "Dependency path steps." }))),
+  novelty: Type.Optional(Type.Number({ description: "Optional novelty score." })),
+  feasibility: Type.Optional(Type.Number({ description: "Optional feasibility score." })),
+  impact: Type.Optional(Type.Number({ description: "Optional impact score." })),
+  evidence_ids: Type.Optional(Type.Array(Type.String({ description: "Evidence IDs for this hypothesis." }))),
+  validation_status: Type.Optional(
+    Type.String({
+      description:
+        "Optional validation status: unchecked | supporting | conflicting | openreview_related | openreview_not_found.",
+    }),
+  ),
+  validation_notes: Type.Optional(Type.String({ description: "Optional validation notes." })),
+  validation_evidence: Type.Optional(
+    Type.Array(Type.String({ description: "Optional validation evidence links/ids." })),
+  ),
+});
+
+const KnowledgeRunLogSchema = Type.Object({
+  model: Type.Optional(Type.String({ description: "Optional model name." })),
+  duration_ms: Type.Optional(Type.Number({ description: "Optional run duration in ms." })),
+  error: Type.Optional(Type.String({ description: "Optional run error text." })),
+  degraded: Type.Optional(Type.Boolean({ description: "Whether this run used degraded behavior." })),
+  notes: Type.Optional(Type.String({ description: "Optional extra notes." })),
+  temp_full_text_dir: Type.Optional(Type.String({ description: "Temporary local directory for full-text files." })),
+  temp_files_downloaded: Type.Optional(Type.Number({ description: "Number of temporary full-text files downloaded." })),
+  temp_cleanup_status: Type.Optional(
+    Type.String({
+      description: "Temporary full-text cleanup status: done | partial | failed | not_needed.",
+    }),
+  ),
+  temp_cleanup_note: Type.Optional(Type.String({ description: "Optional cleanup note/error." })),
+  full_text_attempted: Type.Optional(Type.Number({ description: "Number of papers attempted for full-text read." })),
+  full_text_completed: Type.Optional(Type.Number({ description: "Number of papers successfully full-text read." })),
+});
+
+const KnowledgeStateSchema = Type.Optional(
+  Type.Object({
+    core_papers: Type.Optional(Type.Array(KnowledgePaperSchema)),
+    exploration_papers: Type.Optional(Type.Array(KnowledgePaperSchema)),
+    exploration_trace: Type.Optional(Type.Array(ExplorationTraceSchema)),
+    knowledge_changes: Type.Optional(Type.Array(KnowledgeChangeSchema)),
+    knowledge_updates: Type.Optional(Type.Array(KnowledgeUpdateSchema)),
+    hypotheses: Type.Optional(Type.Array(KnowledgeHypothesisSchema)),
+    run_log: Type.Optional(KnowledgeRunLogSchema),
+  }),
+);
+
 export const ScientifyLiteratureStateToolSchema = Type.Object({
   action: Type.String({
     description:
-      'Action: "prepare" | "record" | "feedback" | "status". `status` also returns `recent_papers` for follow-up traceability.',
+      'Action: "prepare" | "record" | "feedback" | "status". `status` returns recent papers plus knowledge_state summary for follow-up traceability.',
   }),
   scope: Type.String({
     description: "Scope key used to isolate user/channel state.",
@@ -58,6 +187,11 @@ export const ScientifyLiteratureStateToolSchema = Type.Object({
   topic: Type.String({
     description: "Research topic text.",
   }),
+  project_id: Type.Optional(
+    Type.String({
+      description: "Optional project id to pin knowledge_state writes.",
+    }),
+  ),
   preferences: PreferencesSchema,
   papers: Type.Optional(
     Type.Array(PaperSchema, {
@@ -103,6 +237,7 @@ export const ScientifyLiteratureStateToolSchema = Type.Object({
       }),
     ),
   ),
+  knowledge_state: KnowledgeStateSchema,
 });
 
 function readStringParam(params: Record<string, unknown>, key: string): string | undefined {
@@ -205,18 +340,578 @@ function readStringList(params: Record<string, unknown>, key: string): string[] 
   return values.length > 0 ? values : undefined;
 }
 
+function readKnowledgePapers(raw: unknown): Array<{
+  id?: string;
+  title?: string;
+  url?: string;
+  source?: string;
+  publishedAt?: string;
+  score?: number;
+  reason?: string;
+  summary?: string;
+  evidenceIds?: string[];
+  fullTextRead?: boolean;
+  readStatus?: "fulltext" | "partial" | "metadata" | "unread";
+  fullTextSource?: string;
+  fullTextRef?: string;
+  unreadReason?: string;
+  keyEvidenceSpans?: string[];
+  domain?: string;
+  subdomains?: string[];
+  crossDomainLinks?: string[];
+  researchGoal?: string;
+  approach?: string;
+  methodologyDesign?: string;
+  keyContributions?: string[];
+  practicalInsights?: string[];
+  mustUnderstandPoints?: string[];
+  limitations?: string[];
+  evidenceAnchors?: Array<{
+    section?: string;
+    locator?: string;
+    claim: string;
+    quote?: string;
+  }>;
+}> {
+  if (!Array.isArray(raw)) return [];
+  const papers: Array<{
+    id?: string;
+    title?: string;
+    url?: string;
+    source?: string;
+    publishedAt?: string;
+    score?: number;
+    reason?: string;
+    summary?: string;
+    evidenceIds?: string[];
+    fullTextRead?: boolean;
+    readStatus?: "fulltext" | "partial" | "metadata" | "unread";
+    fullTextSource?: string;
+    fullTextRef?: string;
+    unreadReason?: string;
+    keyEvidenceSpans?: string[];
+    domain?: string;
+    subdomains?: string[];
+    crossDomainLinks?: string[];
+    researchGoal?: string;
+    approach?: string;
+    methodologyDesign?: string;
+    keyContributions?: string[];
+    practicalInsights?: string[];
+    mustUnderstandPoints?: string[];
+    limitations?: string[];
+    evidenceAnchors?: Array<{
+      section?: string;
+      locator?: string;
+      claim: string;
+      quote?: string;
+    }>;
+  }> = [];
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+    const record = item as Record<string, unknown>;
+    const id = typeof record.id === "string" ? record.id.trim() : undefined;
+    const title = typeof record.title === "string" ? record.title.trim() : undefined;
+    const url = typeof record.url === "string" ? record.url.trim() : undefined;
+    const source = typeof record.source === "string" ? record.source.trim() : undefined;
+    const publishedAt =
+      typeof record.published_at === "string"
+        ? record.published_at.trim()
+        : typeof record.publishedAt === "string"
+          ? record.publishedAt.trim()
+          : undefined;
+    const score = typeof record.score === "number" && Number.isFinite(record.score) ? record.score : undefined;
+    const reason = typeof record.reason === "string" ? record.reason.trim() : undefined;
+    const summary = typeof record.summary === "string" ? record.summary.trim() : undefined;
+    const evidenceRaw = record.evidence_ids ?? record.evidenceIds;
+    const evidenceIds = Array.isArray(evidenceRaw)
+      ? evidenceRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const fullTextReadRaw = record.full_text_read ?? record.fullTextRead;
+    const fullTextRead = typeof fullTextReadRaw === "boolean" ? fullTextReadRaw : undefined;
+    const readStatusRaw = typeof (record.read_status ?? record.readStatus) === "string"
+      ? String(record.read_status ?? record.readStatus).trim().toLowerCase()
+      : undefined;
+    const readStatus =
+      readStatusRaw && ["fulltext", "partial", "metadata", "unread"].includes(readStatusRaw)
+        ? (readStatusRaw as "fulltext" | "partial" | "metadata" | "unread")
+        : undefined;
+    const fullTextSource = typeof (record.full_text_source ?? record.fullTextSource) === "string"
+      ? String(record.full_text_source ?? record.fullTextSource).trim()
+      : undefined;
+    const fullTextRef = typeof (record.full_text_ref ?? record.fullTextRef) === "string"
+      ? String(record.full_text_ref ?? record.fullTextRef).trim()
+      : undefined;
+    const unreadReason = typeof (record.unread_reason ?? record.unreadReason) === "string"
+      ? String(record.unread_reason ?? record.unreadReason).trim()
+      : undefined;
+    const keyEvidenceSpansRaw = record.key_evidence_spans ?? record.keyEvidenceSpans;
+    const keyEvidenceSpans = Array.isArray(keyEvidenceSpansRaw)
+      ? keyEvidenceSpansRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const domain = typeof record.domain === "string" ? record.domain.trim() : undefined;
+    const subdomainsRaw = record.subdomains;
+    const subdomains = Array.isArray(subdomainsRaw)
+      ? subdomainsRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const crossDomainLinksRaw = record.cross_domain_links ?? record.crossDomainLinks;
+    const crossDomainLinks = Array.isArray(crossDomainLinksRaw)
+      ? crossDomainLinksRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const researchGoal = typeof (record.research_goal ?? record.researchGoal) === "string"
+      ? String(record.research_goal ?? record.researchGoal).trim()
+      : undefined;
+    const approach = typeof record.approach === "string" ? record.approach.trim() : undefined;
+    const methodologyDesign = typeof (record.methodology_design ?? record.methodologyDesign) === "string"
+      ? String(record.methodology_design ?? record.methodologyDesign).trim()
+      : undefined;
+    const keyContributionsRaw = record.key_contributions ?? record.keyContributions;
+    const keyContributions = Array.isArray(keyContributionsRaw)
+      ? keyContributionsRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const practicalInsightsRaw = record.practical_insights ?? record.practicalInsights;
+    const practicalInsights = Array.isArray(practicalInsightsRaw)
+      ? practicalInsightsRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const mustUnderstandPointsRaw = record.must_understand_points ?? record.mustUnderstandPoints;
+    const mustUnderstandPoints = Array.isArray(mustUnderstandPointsRaw)
+      ? mustUnderstandPointsRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const limitationsRaw = record.limitations;
+    const limitations = Array.isArray(limitationsRaw)
+      ? limitationsRaw
+          .filter((v): v is string => typeof v === "string")
+          .map((v) => v.trim())
+          .filter((v) => v.length > 0)
+      : undefined;
+    const evidenceAnchorsRaw = record.evidence_anchors ?? record.evidenceAnchors;
+    const evidenceAnchors = Array.isArray(evidenceAnchorsRaw)
+      ? evidenceAnchorsRaw
+          .filter((v): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v))
+          .map((anchor) => {
+            const section = typeof anchor.section === "string" ? anchor.section.trim() : undefined;
+            const locator = typeof anchor.locator === "string" ? anchor.locator.trim() : undefined;
+            const claim = typeof anchor.claim === "string" ? anchor.claim.trim() : "";
+            const quote = typeof anchor.quote === "string" ? anchor.quote.trim() : undefined;
+            if (!claim) return undefined;
+            return {
+              ...(section ? { section } : {}),
+              ...(locator ? { locator } : {}),
+              claim,
+              ...(quote ? { quote } : {}),
+            };
+          })
+          .filter(
+            (v): v is {
+              section?: string;
+              locator?: string;
+              claim: string;
+              quote?: string;
+            } => Boolean(v),
+          )
+      : undefined;
+    if (
+      !id &&
+      !title &&
+      !url &&
+      !summary &&
+      !reason &&
+      !domain &&
+      !researchGoal &&
+      !approach &&
+      !methodologyDesign &&
+      (!keyContributions || keyContributions.length === 0) &&
+      (!practicalInsights || practicalInsights.length === 0) &&
+      (!mustUnderstandPoints || mustUnderstandPoints.length === 0) &&
+      (!limitations || limitations.length === 0)
+    ) {
+      continue;
+    }
+    papers.push({
+      ...(id ? { id } : {}),
+      ...(title ? { title } : {}),
+      ...(url ? { url } : {}),
+      ...(source ? { source } : {}),
+      ...(publishedAt ? { publishedAt } : {}),
+      ...(score !== undefined ? { score } : {}),
+      ...(reason ? { reason } : {}),
+      ...(summary ? { summary } : {}),
+      ...(evidenceIds && evidenceIds.length > 0 ? { evidenceIds } : {}),
+      ...(typeof fullTextRead === "boolean" ? { fullTextRead } : {}),
+      ...(readStatus ? { readStatus } : {}),
+      ...(fullTextSource ? { fullTextSource } : {}),
+      ...(fullTextRef ? { fullTextRef } : {}),
+      ...(unreadReason ? { unreadReason } : {}),
+      ...(keyEvidenceSpans && keyEvidenceSpans.length > 0 ? { keyEvidenceSpans } : {}),
+      ...(domain ? { domain } : {}),
+      ...(subdomains && subdomains.length > 0 ? { subdomains } : {}),
+      ...(crossDomainLinks && crossDomainLinks.length > 0 ? { crossDomainLinks } : {}),
+      ...(researchGoal ? { researchGoal } : {}),
+      ...(approach ? { approach } : {}),
+      ...(methodologyDesign ? { methodologyDesign } : {}),
+      ...(keyContributions && keyContributions.length > 0 ? { keyContributions } : {}),
+      ...(practicalInsights && practicalInsights.length > 0 ? { practicalInsights } : {}),
+      ...(mustUnderstandPoints && mustUnderstandPoints.length > 0 ? { mustUnderstandPoints } : {}),
+      ...(limitations && limitations.length > 0 ? { limitations } : {}),
+      ...(evidenceAnchors && evidenceAnchors.length > 0 ? { evidenceAnchors } : {}),
+    });
+  }
+
+  return papers;
+}
+
+function readKnowledgeStatePayload(params: Record<string, unknown>): KnowledgeStateInput | undefined {
+  const raw = params.knowledge_state;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const record = raw as Record<string, unknown>;
+
+  const corePapers = readKnowledgePapers(record.core_papers ?? record.corePapers);
+  const explorationPapers = readKnowledgePapers(record.exploration_papers ?? record.explorationPapers);
+  const explorationTraceRaw = record.exploration_trace ?? record.explorationTrace;
+  const explorationTrace = Array.isArray(explorationTraceRaw)
+    ? explorationTraceRaw
+        .filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
+        .map((item) => {
+          const query = typeof item.query === "string" ? item.query.trim() : "";
+          if (!query) return undefined;
+          const reason = typeof item.reason === "string" ? item.reason.trim() : undefined;
+          const source = typeof item.source === "string" ? item.source.trim() : undefined;
+          const candidatesRaw = item.candidates;
+          const candidates =
+            typeof candidatesRaw === "number" && Number.isFinite(candidatesRaw) ? candidatesRaw : undefined;
+          const filteredToRaw = item.filtered_to ?? item.filteredTo;
+          const filteredTo =
+            typeof filteredToRaw === "number" && Number.isFinite(filteredToRaw) ? filteredToRaw : undefined;
+          const filteredOutRaw = item.filtered_out_reasons ?? item.filteredOutReasons;
+          const filteredOutReasons = Array.isArray(filteredOutRaw)
+            ? filteredOutRaw
+                .filter((v): v is string => typeof v === "string")
+                .map((v) => v.trim())
+                .filter((v) => v.length > 0)
+            : undefined;
+          const resultCountRaw = item.result_count ?? item.resultCount;
+          const resultCount =
+            typeof resultCountRaw === "number" && Number.isFinite(resultCountRaw)
+              ? resultCountRaw
+              : undefined;
+          return {
+            query,
+            ...(reason ? { reason } : {}),
+            ...(source ? { source } : {}),
+            ...(typeof candidates === "number" ? { candidates } : {}),
+            ...(typeof filteredTo === "number" ? { filteredTo } : {}),
+            ...(filteredOutReasons && filteredOutReasons.length > 0 ? { filteredOutReasons } : {}),
+            ...(typeof resultCount === "number" ? { resultCount } : {}),
+          };
+        })
+        .filter((item): item is { query: string; reason?: string; resultCount?: number } => Boolean(item))
+    : [];
+
+  const knowledgeChangesRaw = record.knowledge_changes ?? record.knowledgeChanges;
+  const knowledgeChanges: NonNullable<KnowledgeStateInput["knowledgeChanges"]> = [];
+  if (Array.isArray(knowledgeChangesRaw)) {
+    for (const item of knowledgeChangesRaw) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const row = item as Record<string, unknown>;
+      const rawType = typeof row.type === "string" ? row.type.trim().toUpperCase() : "NEW";
+      const type = ["NEW", "CONFIRM", "REVISE", "BRIDGE"].includes(rawType)
+        ? (rawType as "NEW" | "CONFIRM" | "REVISE" | "BRIDGE")
+        : "NEW";
+      const statement = typeof row.statement === "string" ? row.statement.trim() : "";
+      if (!statement) continue;
+      const evidenceRaw = row.evidence_ids ?? row.evidenceIds;
+      const evidenceIds = Array.isArray(evidenceRaw)
+        ? evidenceRaw
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+      const topic = typeof row.topic === "string" ? row.topic.trim() : undefined;
+      knowledgeChanges.push({
+        type,
+        statement,
+        ...(evidenceIds && evidenceIds.length > 0 ? { evidenceIds } : {}),
+        ...(topic ? { topic } : {}),
+      });
+    }
+  }
+
+  const knowledgeUpdatesRaw = record.knowledge_updates ?? record.knowledgeUpdates;
+  const knowledgeUpdates: NonNullable<KnowledgeStateInput["knowledgeUpdates"]> = [];
+  if (Array.isArray(knowledgeUpdatesRaw)) {
+    for (const item of knowledgeUpdatesRaw) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const row = item as Record<string, unknown>;
+      const topic = typeof row.topic === "string" ? row.topic.trim() : "";
+      const rawOp = typeof row.op === "string" ? row.op.trim().toLowerCase() : "append";
+      const op = ["append", "revise", "confirm", "bridge"].includes(rawOp)
+        ? (rawOp as "append" | "revise" | "confirm" | "bridge")
+        : "append";
+      const content = typeof row.content === "string" ? row.content.trim() : "";
+      if (!topic || !content) continue;
+      const rawConfidence = typeof row.confidence === "string" ? row.confidence.trim().toLowerCase() : undefined;
+      const confidence =
+        rawConfidence && ["low", "medium", "high"].includes(rawConfidence)
+          ? (rawConfidence as "low" | "medium" | "high")
+          : undefined;
+      const evidenceRaw = row.evidence_ids ?? row.evidenceIds;
+      const evidenceIds = Array.isArray(evidenceRaw)
+        ? evidenceRaw
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+      knowledgeUpdates.push({
+        topic,
+        op,
+        content,
+        ...(confidence ? { confidence } : {}),
+        ...(evidenceIds && evidenceIds.length > 0 ? { evidenceIds } : {}),
+      });
+    }
+  }
+
+  const hypothesesRaw = record.hypotheses;
+  const hypotheses: NonNullable<KnowledgeStateInput["hypotheses"]> = [];
+  if (Array.isArray(hypothesesRaw)) {
+    for (const item of hypothesesRaw) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+      const row = item as Record<string, unknown>;
+      const id = typeof row.id === "string" ? row.id.trim() : undefined;
+      const statement = typeof row.statement === "string" ? row.statement.trim() : "";
+      const rawTrigger = typeof row.trigger === "string" ? row.trigger.trim().toUpperCase() : "TREND";
+      const trigger = ["GAP", "BRIDGE", "TREND", "CONTRADICTION"].includes(rawTrigger)
+        ? (rawTrigger as "GAP" | "BRIDGE" | "TREND" | "CONTRADICTION")
+        : "TREND";
+      if (!statement) continue;
+      const dependencyRaw = row.dependency_path ?? row.dependencyPath;
+      const dependencyPath = Array.isArray(dependencyRaw)
+        ? dependencyRaw
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+      const evidenceRaw = row.evidence_ids ?? row.evidenceIds;
+      const evidenceIds = Array.isArray(evidenceRaw)
+        ? evidenceRaw
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+      const validationStatusRaw =
+        typeof (row.validation_status ?? row.validationStatus) === "string"
+          ? String(row.validation_status ?? row.validationStatus).trim().toLowerCase()
+          : undefined;
+      const validationStatus =
+        validationStatusRaw &&
+        ["unchecked", "supporting", "conflicting", "openreview_related", "openreview_not_found"].includes(
+          validationStatusRaw,
+        )
+          ? (validationStatusRaw as
+              | "unchecked"
+              | "supporting"
+              | "conflicting"
+              | "openreview_related"
+              | "openreview_not_found")
+          : undefined;
+      const validationNotes =
+        typeof (row.validation_notes ?? row.validationNotes) === "string"
+          ? String(row.validation_notes ?? row.validationNotes).trim()
+          : undefined;
+      const validationEvidenceRaw = row.validation_evidence ?? row.validationEvidence;
+      const validationEvidence = Array.isArray(validationEvidenceRaw)
+        ? validationEvidenceRaw
+            .filter((v): v is string => typeof v === "string")
+            .map((v) => v.trim())
+            .filter((v) => v.length > 0)
+        : undefined;
+      const novelty = typeof row.novelty === "number" && Number.isFinite(row.novelty) ? row.novelty : undefined;
+      const feasibility =
+        typeof row.feasibility === "number" && Number.isFinite(row.feasibility) ? row.feasibility : undefined;
+      const impact = typeof row.impact === "number" && Number.isFinite(row.impact) ? row.impact : undefined;
+      hypotheses.push({
+        ...(id ? { id } : {}),
+        statement,
+        trigger,
+        ...(dependencyPath && dependencyPath.length > 0 ? { dependencyPath } : {}),
+        ...(evidenceIds && evidenceIds.length > 0 ? { evidenceIds } : {}),
+        ...(validationStatus ? { validationStatus } : {}),
+        ...(validationNotes ? { validationNotes } : {}),
+        ...(validationEvidence && validationEvidence.length > 0 ? { validationEvidence } : {}),
+        ...(novelty !== undefined ? { novelty } : {}),
+        ...(feasibility !== undefined ? { feasibility } : {}),
+        ...(impact !== undefined ? { impact } : {}),
+      });
+    }
+  }
+
+  const runLogRaw = record.run_log ?? record.runLog;
+  const runLog =
+    runLogRaw && typeof runLogRaw === "object" && !Array.isArray(runLogRaw)
+      ? (() => {
+          const runLogRecord = runLogRaw as Record<string, unknown>;
+          const model = typeof runLogRecord.model === "string" ? runLogRecord.model.trim() : undefined;
+          const durationMsRaw = runLogRecord.duration_ms ?? runLogRecord.durationMs;
+          const durationMs =
+            typeof durationMsRaw === "number" && Number.isFinite(durationMsRaw) ? durationMsRaw : undefined;
+          const error = typeof runLogRecord.error === "string" ? runLogRecord.error.trim() : undefined;
+          const degraded = runLogRecord.degraded === true;
+          const notes = typeof runLogRecord.notes === "string" ? runLogRecord.notes.trim() : undefined;
+          const tempFullTextDir =
+            typeof (runLogRecord.temp_full_text_dir ?? runLogRecord.tempFullTextDir) === "string"
+              ? String(runLogRecord.temp_full_text_dir ?? runLogRecord.tempFullTextDir).trim()
+              : undefined;
+          const tempFilesDownloadedRaw = runLogRecord.temp_files_downloaded ?? runLogRecord.tempFilesDownloaded;
+          const tempFilesDownloaded =
+            typeof tempFilesDownloadedRaw === "number" && Number.isFinite(tempFilesDownloadedRaw)
+              ? tempFilesDownloadedRaw
+              : undefined;
+          const tempCleanupStatusRaw =
+            typeof (runLogRecord.temp_cleanup_status ?? runLogRecord.tempCleanupStatus) === "string"
+              ? String(runLogRecord.temp_cleanup_status ?? runLogRecord.tempCleanupStatus).trim().toLowerCase()
+              : undefined;
+          const tempCleanupStatus =
+            tempCleanupStatusRaw && ["done", "partial", "failed", "not_needed"].includes(tempCleanupStatusRaw)
+              ? (tempCleanupStatusRaw as "done" | "partial" | "failed" | "not_needed")
+              : undefined;
+          const tempCleanupNote =
+            typeof (runLogRecord.temp_cleanup_note ?? runLogRecord.tempCleanupNote) === "string"
+              ? String(runLogRecord.temp_cleanup_note ?? runLogRecord.tempCleanupNote).trim()
+              : undefined;
+          const fullTextAttemptedRaw = runLogRecord.full_text_attempted ?? runLogRecord.fullTextAttempted;
+          const fullTextAttempted =
+            typeof fullTextAttemptedRaw === "number" && Number.isFinite(fullTextAttemptedRaw)
+              ? fullTextAttemptedRaw
+              : undefined;
+          const fullTextCompletedRaw = runLogRecord.full_text_completed ?? runLogRecord.fullTextCompleted;
+          const fullTextCompleted =
+            typeof fullTextCompletedRaw === "number" && Number.isFinite(fullTextCompletedRaw)
+              ? fullTextCompletedRaw
+              : undefined;
+          if (
+            !model &&
+            durationMs === undefined &&
+            !error &&
+            !degraded &&
+            !notes &&
+            !tempFullTextDir &&
+            tempFilesDownloaded === undefined &&
+            !tempCleanupStatus &&
+            !tempCleanupNote &&
+            fullTextAttempted === undefined &&
+            fullTextCompleted === undefined
+          ) {
+            return undefined;
+          }
+          return {
+            ...(model ? { model } : {}),
+            ...(durationMs !== undefined ? { durationMs } : {}),
+            ...(error ? { error } : {}),
+            ...(degraded ? { degraded } : {}),
+            ...(notes ? { notes } : {}),
+            ...(tempFullTextDir ? { tempFullTextDir } : {}),
+            ...(tempFilesDownloaded !== undefined ? { tempFilesDownloaded } : {}),
+            ...(tempCleanupStatus ? { tempCleanupStatus } : {}),
+            ...(tempCleanupNote ? { tempCleanupNote } : {}),
+            ...(fullTextAttempted !== undefined ? { fullTextAttempted } : {}),
+            ...(fullTextCompleted !== undefined ? { fullTextCompleted } : {}),
+          };
+        })()
+      : undefined;
+
+  const hasAny =
+    corePapers.length > 0 ||
+    explorationPapers.length > 0 ||
+    explorationTrace.length > 0 ||
+    knowledgeChanges.length > 0 ||
+    knowledgeUpdates.length > 0 ||
+    hypotheses.length > 0 ||
+    Boolean(runLog);
+
+  if (!hasAny) return undefined;
+
+  return {
+    ...(corePapers.length > 0 ? { corePapers } : {}),
+    ...(explorationPapers.length > 0 ? { explorationPapers } : {}),
+    ...(explorationTrace.length > 0 ? { explorationTrace } : {}),
+    ...(knowledgeChanges.length > 0 ? { knowledgeChanges } : {}),
+    ...(knowledgeUpdates.length > 0 ? { knowledgeUpdates } : {}),
+    ...(hypotheses.length > 0 ? { hypotheses } : {}),
+    ...(runLog ? { runLog } : {}),
+  };
+}
+
+function serializeKnowledgePaper(paper: NonNullable<KnowledgeStateInput["corePapers"]>[number]): Record<string, unknown> {
+  return {
+    id: paper.id ?? null,
+    title: paper.title ?? null,
+    url: paper.url ?? null,
+    source: paper.source ?? null,
+    published_at: paper.publishedAt ?? null,
+    score: paper.score ?? null,
+    reason: paper.reason ?? null,
+    summary: paper.summary ?? null,
+    evidence_ids: paper.evidenceIds ?? [],
+    full_text_read: paper.fullTextRead ?? null,
+    read_status: paper.readStatus ?? null,
+    full_text_source: paper.fullTextSource ?? null,
+    full_text_ref: paper.fullTextRef ?? null,
+    unread_reason: paper.unreadReason ?? null,
+    key_evidence_spans: paper.keyEvidenceSpans ?? [],
+    domain: paper.domain ?? null,
+    subdomains: paper.subdomains ?? [],
+    cross_domain_links: paper.crossDomainLinks ?? [],
+    research_goal: paper.researchGoal ?? null,
+    approach: paper.approach ?? null,
+    methodology_design: paper.methodologyDesign ?? null,
+    key_contributions: paper.keyContributions ?? [],
+    practical_insights: paper.practicalInsights ?? [],
+    must_understand_points: paper.mustUnderstandPoints ?? [],
+    limitations: paper.limitations ?? [],
+    evidence_anchors: (paper.evidenceAnchors ?? []).map((anchor) => ({
+      section: anchor.section ?? null,
+      locator: anchor.locator ?? null,
+      claim: anchor.claim,
+      quote: anchor.quote ?? null,
+    })),
+  };
+}
+
 export function createScientifyLiteratureStateTool() {
   return {
     label: "Scientify Literature State",
     name: "scientify_literature_state",
     description:
-      "Manage incremental literature state for subscriptions: prepare dedupe context, record pushed papers, persist lightweight feedback memory, and query status.",
+      "Manage incremental research state for subscriptions: prepare dedupe context, record pushed papers plus knowledge_state artifacts, persist lightweight feedback memory, and query status.",
     parameters: ScientifyLiteratureStateToolSchema,
     execute: async (_toolCallId: string, rawArgs: unknown) => {
       const params = (rawArgs ?? {}) as Record<string, unknown>;
       const action = (readStringParam(params, "action") ?? "").toLowerCase();
       const scope = readStringParam(params, "scope");
       const topic = readStringParam(params, "topic");
+      const projectId = readStringParam(params, "project_id");
       const preferences = readPreferences(params);
 
       if (!scope || !topic) {
@@ -255,6 +950,7 @@ export function createScientifyLiteratureStateTool() {
           const status = readStringParam(params, "status");
           const runId = readStringParam(params, "run_id");
           const note = readStringParam(params, "note");
+          const knowledgeState = readKnowledgeStatePayload(params);
           const recorded = await recordIncrementalPush({
             scope,
             topic,
@@ -263,6 +959,8 @@ export function createScientifyLiteratureStateTool() {
             runId,
             note,
             papers,
+            ...(projectId ? { projectId } : {}),
+            ...(knowledgeState ? { knowledgeState } : {}),
           });
           return Result.ok({
             action,
@@ -285,6 +983,30 @@ export function createScientifyLiteratureStateTool() {
             recorded_papers: recorded.recordedPapers,
             total_known_papers: recorded.totalKnownPapers,
             pushed_at_ms: recorded.pushedAtMs,
+            project_id: recorded.projectId ?? null,
+            knowledge_state_summary: recorded.knowledgeStateSummary
+              ? {
+                  project_id: recorded.knowledgeStateSummary.projectId,
+                  stream_key: recorded.knowledgeStateSummary.streamKey,
+                  total_runs: recorded.knowledgeStateSummary.totalRuns,
+                  total_hypotheses: recorded.knowledgeStateSummary.totalHypotheses,
+                  knowledge_topics_count: recorded.knowledgeStateSummary.knowledgeTopicsCount,
+                  paper_notes_count: recorded.knowledgeStateSummary.paperNotesCount,
+                  recent_full_text_read_count: recorded.knowledgeStateSummary.recentFullTextReadCount,
+                  recent_not_full_text_read_count: recorded.knowledgeStateSummary.recentNotFullTextReadCount,
+                  quality_gate: {
+                    passed: recorded.knowledgeStateSummary.qualityGate.passed,
+                    full_text_coverage_pct: recorded.knowledgeStateSummary.qualityGate.fullTextCoveragePct,
+                    evidence_binding_rate_pct: recorded.knowledgeStateSummary.qualityGate.evidenceBindingRatePct,
+                    citation_error_rate_pct: recorded.knowledgeStateSummary.qualityGate.citationErrorRatePct,
+                    reasons: recorded.knowledgeStateSummary.qualityGate.reasons,
+                  },
+                  unread_core_paper_ids: recorded.knowledgeStateSummary.unreadCorePaperIds,
+                  last_run_at_ms: recorded.knowledgeStateSummary.lastRunAtMs ?? null,
+                  last_status: recorded.knowledgeStateSummary.lastStatus ?? null,
+                  recent_papers: recorded.knowledgeStateSummary.recentPapers.map(serializeKnowledgePaper),
+                }
+              : null,
           });
         }
 
@@ -338,7 +1060,11 @@ export function createScientifyLiteratureStateTool() {
         }
 
         if (action === "status") {
-          const status = await getIncrementalStateStatus({ scope, topic });
+          const status = await getIncrementalStateStatus({
+            scope,
+            topic,
+            ...(projectId ? { projectId } : {}),
+          });
           return Result.ok({
             action,
             scope: status.scope,
@@ -362,6 +1088,53 @@ export function createScientifyLiteratureStateTool() {
             total_runs: status.totalRuns,
             last_status: status.lastStatus ?? null,
             last_pushed_at_ms: status.lastPushedAtMs ?? null,
+            knowledge_state_summary: status.knowledgeStateSummary
+              ? {
+                  project_id: status.knowledgeStateSummary.projectId,
+                  stream_key: status.knowledgeStateSummary.streamKey,
+                  total_runs: status.knowledgeStateSummary.totalRuns,
+                  total_hypotheses: status.knowledgeStateSummary.totalHypotheses,
+                  knowledge_topics_count: status.knowledgeStateSummary.knowledgeTopicsCount,
+                  paper_notes_count: status.knowledgeStateSummary.paperNotesCount,
+                  recent_full_text_read_count: status.knowledgeStateSummary.recentFullTextReadCount,
+                  recent_not_full_text_read_count: status.knowledgeStateSummary.recentNotFullTextReadCount,
+                  quality_gate: {
+                    passed: status.knowledgeStateSummary.qualityGate.passed,
+                    full_text_coverage_pct: status.knowledgeStateSummary.qualityGate.fullTextCoveragePct,
+                    evidence_binding_rate_pct: status.knowledgeStateSummary.qualityGate.evidenceBindingRatePct,
+                    citation_error_rate_pct: status.knowledgeStateSummary.qualityGate.citationErrorRatePct,
+                    reasons: status.knowledgeStateSummary.qualityGate.reasons,
+                  },
+                  unread_core_paper_ids: status.knowledgeStateSummary.unreadCorePaperIds,
+                  last_run_at_ms: status.knowledgeStateSummary.lastRunAtMs ?? null,
+                  last_status: status.knowledgeStateSummary.lastStatus ?? null,
+                  recent_papers: status.knowledgeStateSummary.recentPapers.map(serializeKnowledgePaper),
+                }
+              : null,
+            recent_hypotheses: status.recentHypotheses.map((item) => ({
+              id: item.id,
+              statement: item.statement,
+              trigger: item.trigger,
+              created_at_ms: item.createdAtMs,
+              file: item.file,
+            })),
+            recent_change_stats: status.recentChangeStats.map((item) => ({
+              day: item.day,
+              run_id: item.runId,
+              new_count: item.newCount,
+              confirm_count: item.confirmCount,
+              revise_count: item.reviseCount,
+              bridge_count: item.bridgeCount,
+            })),
+            last_exploration_trace: status.lastExplorationTrace.map((item) => ({
+              query: item.query,
+              reason: item.reason ?? null,
+              source: item.source ?? null,
+              candidates: item.candidates ?? null,
+              filtered_to: item.filteredTo ?? null,
+              filtered_out_reasons: item.filteredOutReasons ?? [],
+              result_count: item.resultCount ?? null,
+            })),
             recent_papers: status.recentPapers.map((paper) => ({
               id: paper.id,
               title: paper.title ?? null,

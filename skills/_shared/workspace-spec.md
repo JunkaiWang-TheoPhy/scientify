@@ -70,7 +70,15 @@ All Scientify skills share a unified project-based workspace structure.
 ├── iterations/                  # /research-review: judge iterations
 │   ├── judge_v1.md
 │   └── judge_v2.md
-└── experiment_res.md            # /research-experiment: full training + ablation results
+├── experiment_res.md            # /research-experiment: full training + ablation results
+└── knowledge_state/             # scheduled research state artifacts
+    ├── knowledge/
+    ├── paper_notes/
+    ├── daily_changes/
+    ├── hypotheses/
+    ├── logs/
+    ├── state.json
+    └── events.jsonl
 ```
 
 ## Conventions
@@ -126,12 +134,16 @@ WORKSPACE=~/.openclaw/workspace/projects/$(cat ~/.openclaw/workspace/projects/.a
 
 ### Scheduled Subscription Storage
 
-`research-subscription` does not write project files under the workspace tree.
+`research-subscription` writes both global incremental state and project-level knowledge_state files.
 
 - Scheduled jobs are stored in OpenClaw cron storage.
 - Incremental dedupe state/logs are stored under `~/.openclaw/workspace/scientify/`:
   - `literature-state.json`
   - `literature-push-log.jsonl`
+- Project-level research state is stored under:
+  - `~/.openclaw/workspace/projects/{project-id}/knowledge_state/`
+  - Includes `knowledge/`, `paper_notes/`, `daily_changes/`, `hypotheses/`, `logs/`, `state.json`, `events.jsonl`
+  - `paper_notes/` stores per-paper deep-reading records (domain/subdomains/cross-domain links/research goal/approach/design/contributions/practical insights/must-understand points/limitations/evidence anchors).
 - Use `openclaw cron list --all --json` for global inspection.
 - Use `/research-subscriptions` for scope-aware inspection within Scientify.
 - Use `/research-unsubscribe` to remove jobs for the current sender/channel scope.
@@ -149,4 +161,4 @@ WORKSPACE=~/.openclaw/workspace/projects/$(cat ~/.openclaw/workspace/projects/.a
 | `/research-pipeline` | Orchestrator — spawns the above 5 skills in sequence |
 | `/idea-generation` | `ideas/` |
 | `/write-review-paper` | `review/` |
-| `research-subscription` | No project-tree output; creates OpenClaw cron jobs and updates `~/.openclaw/workspace/scientify/` incremental state logs (including lightweight preference-memory feedback) |
+| `research-subscription` | Creates OpenClaw cron jobs, updates global incremental state (`~/.openclaw/workspace/scientify/`), and persists project-level `knowledge_state/` artifacts for traceability |

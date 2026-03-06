@@ -36,6 +36,7 @@ When user gives preference feedback (e.g. "more like this", "skip this direction
 Preference memory is backend-only: use it to rerank future pushes, do not expose memory internals unless user explicitly asks.
 Do not stop at explanation when user explicitly asks to set a schedule.
 Rules: file exists = step done (skip). Outputs immutable unless user asks. project/ mutable during review loop.
+Execution: always use \`python3\` (not \`python\`) for shell commands in this environment.
 Rigor: read first, think second, answer third. Never fabricate references or results. Every claim needs a source. Say "I don't know" when uncertain. Read actual papers, not just abstracts. Ground ideas in real papers.`;
 
 /**

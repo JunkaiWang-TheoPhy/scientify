@@ -18,6 +18,7 @@ import { createArxivDownloadTool } from "./src/tools/arxiv-download.js";
 import { createGithubSearchTool } from "./src/tools/github-search-tool.js";
 import { createPaperBrowserTool } from "./src/tools/paper-browser.js";
 import { createOpenAlexSearchTool } from "./src/tools/openalex-search.js";
+import { createOpenReviewLookupTool } from "./src/tools/openreview-lookup.js";
 import { createUnpaywallDownloadTool } from "./src/tools/unpaywall-download.js";
 import { createScientifyCronTool } from "./src/tools/scientify-cron.js";
 import { createScientifyLiteratureStateTool } from "./src/tools/scientify-literature-state.js";
@@ -42,6 +43,7 @@ export default function register(api: OpenClawPluginApi) {
   api.registerTool(createGithubSearchTool());
   api.registerTool(createPaperBrowserTool());
   api.registerTool(createOpenAlexSearchTool());
+  api.registerTool(createOpenReviewLookupTool());
   api.registerTool(createUnpaywallDownloadTool());
   api.registerTool(createScientifyCronTool({ runtime: api.runtime, logger: api.logger }));
   api.registerTool(createScientifyLiteratureStateTool());

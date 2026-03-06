@@ -186,6 +186,22 @@ Create `$WORKSPACE/ideas/selected_idea.md` with:
 - Hyperparameters
 - Implementation roadmap
 
+### 6.3 (Optional but recommended) OpenReview Evidence Check
+
+For the top 1-2 shortlisted ideas, validate novelty/positioning risk with `openreview_lookup`:
+
+- Query using core title keywords or representative baseline paper title
+- Extract evidence:
+  - decision (if available)
+  - average rating/confidence
+  - reviewer weakness patterns
+- Add a short "submission risk note" section per idea:
+  - likely reviewer concern
+  - mitigation experiment to add
+  - positioning adjustment
+
+Do not claim accept/reject predictions as facts. Report evidence-backed risk signals only.
+
 ---
 
 ## Step 7: Code Survey

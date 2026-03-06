@@ -332,6 +332,7 @@ openclaw gateway
 | `arxiv_search` | 搜索 arXiv 论文，返回元数据（标题、作者、摘要、ID）。不下载文件。支持按相关性/日期排序、日期过滤。 |
 | `arxiv_download` | 按 arXiv ID 批量下载论文，优先 .tex 源文件（PDF 回退）。需指定绝对路径输出目录。 |
 | `openalex_search` | 通过 OpenAlex API 搜索跨学科学术论文，返回 DOI、作者、引用数、OA 状态。覆盖范围比 arXiv 更广。 |
+| `openreview_lookup` | 按标题/ID/forum 检索 OpenReview 证据。返回（若存在）决策结论、review 的 rating/confidence 聚合，以及简要审稿摘要，用于投稿风险分析。 |
 | `unpaywall_download` | 通过 Unpaywall API 按 DOI 下载开放获取 PDF。非 OA 论文跳过不报错。 |
 | `github_search` | 搜索 GitHub 仓库，返回仓库名、描述、star 数、URL。支持语言过滤和排序。 |
 | `paper_browser` | 分页浏览大型论文文件（.tex/.md），避免一次性加载数千行到上下文。返回指定行范围和导航信息。 |

@@ -76,6 +76,7 @@ to prepare dedupe context and record pushed paper IDs for traceability.
 If an incremental pass returns no unseen papers, run one fallback representative pass before returning empty.
 If user gives explicit preference feedback during follow-up (read/skip/star style intent, source preference, direction preference),
 persist it via `scientify_literature_state` action=`feedback` (backend-only memory, not user-facing by default).
+If the user asks "which papers did you push just now?", call `scientify_literature_state` action=`status` first and answer from `recent_papers` (do not claim you must re-search unless status is empty).
 
 ## Message field (plain reminder)
 

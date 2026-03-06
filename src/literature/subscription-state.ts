@@ -63,6 +63,17 @@ export type RecordResult = {
   pushedAtMs: number;
 };
 
+export type RecentPaperSummary = {
+  id: string;
+  title?: string;
+  url?: string;
+  lastScore?: number;
+  lastReason?: string;
+  firstPushedAtMs: number;
+  lastPushedAtMs: number;
+  pushCount: number;
+};
+
 export type FeedbackResult = {
   scope: string;
   topic: string;
@@ -152,9 +163,27 @@ function normalizeTopic(raw: string): string {
   return normalizeText(raw).toLowerCase();
 }
 
+function sanitizeScopePart(raw: string): string {
+  const normalized = normalizeText(raw).toLowerCase();
+  const cleaned = normalized
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return cleaned || "unknown";
+}
+
 function normalizeScope(raw: string): string {
   const trimmed = normalizeText(raw).toLowerCase();
-  return trimmed.length > 0 ? trimmed : "global";
+  if (trimmed.length === 0) return "global";
+
+  const split = trimmed.split(":");
+  if (split.length === 1) {
+    return sanitizeScopePart(split[0]);
+  }
+
+  const channel = sanitizeScopePart(split[0]);
+  const target = sanitizeScopePart(split.slice(1).join(":"));
+  return `${channel}:${target}`;
 }
 
 function topicKey(scope: string, topic: string): string {
@@ -444,10 +473,27 @@ function getOrCreateTopicState(
   const normalizedScope = normalizeScope(scope);
   const normalizedTopicDisplay = normalizeText(topic);
   const key = topicKey(normalizedScope, normalizedTopicDisplay);
-  const existing = root.topics[key];
+  const expectedNormalizedTopic = normalizeTopic(normalizedTopicDisplay);
+
+  let existing = root.topics[key];
+  if (!existing) {
+    for (const [legacyKey, candidate] of Object.entries(root.topics)) {
+      if (!candidate || typeof candidate !== "object") continue;
+      if (normalizeScope(candidate.scope) !== normalizedScope) continue;
+      if (normalizeTopic(candidate.topic) !== expectedNormalizedTopic) continue;
+      existing = candidate;
+      if (legacyKey !== key) {
+        delete root.topics[legacyKey];
+        root.topics[key] = candidate;
+      }
+      break;
+    }
+  }
+
   if (existing) {
     existing.scope = normalizedScope;
     existing.topic = normalizedTopicDisplay;
+    existing.topicKey = key;
     ensureTopicMemoryState(existing);
     if (!existing.pushedPapers || typeof existing.pushedPapers !== "object") {
       existing.pushedPapers = {};
@@ -456,6 +502,92 @@ function getOrCreateTopicState(
       existing.totalRuns = 0;
     }
     existing.preferences = mergePreferences(existing.preferences, incomingPrefs);
+
+    // Merge duplicate legacy buckets produced by old scope normalization rules.
+    for (const [otherKey, other] of Object.entries(root.topics)) {
+      if (otherKey === key) continue;
+      if (!other || typeof other !== "object") continue;
+      if (normalizeScope(other.scope) !== normalizedScope) continue;
+      if (normalizeTopic(other.topic) !== expectedNormalizedTopic) continue;
+
+      ensureTopicMemoryState(other);
+      existing.preferences = mergePreferences(existing.preferences, other.preferences);
+
+      const existingMemory = ensureTopicMemoryState(existing);
+      const otherMemory = ensureTopicMemoryState(other);
+
+      existingMemory.feedbackCounts.read += otherMemory.feedbackCounts.read;
+      existingMemory.feedbackCounts.skip += otherMemory.feedbackCounts.skip;
+      existingMemory.feedbackCounts.star += otherMemory.feedbackCounts.star;
+
+      for (const [k, v] of Object.entries(otherMemory.keywordScores)) {
+        if (!Number.isFinite(v)) continue;
+        updateScoreMap(existingMemory.keywordScores, k, v);
+      }
+      for (const [k, v] of Object.entries(otherMemory.sourceScores)) {
+        if (!Number.isFinite(v)) continue;
+        updateScoreMap(existingMemory.sourceScores, k, v);
+      }
+      existingMemory.keywordScores = limitScoreMap(existingMemory.keywordScores);
+      existingMemory.sourceScores = limitScoreMap(existingMemory.sourceScores);
+
+      const mergedNotes = [...existingMemory.recentNotes, ...otherMemory.recentNotes]
+        .filter((item) => Number.isFinite(item.ts) && item.text.length > 0)
+        .sort((a, b) => a.ts - b.ts)
+        .slice(-MAX_MEMORY_NOTES);
+      existingMemory.recentNotes = mergedNotes;
+
+      const existingFb = existingMemory.lastFeedbackAtMs ?? 0;
+      const otherFb = otherMemory.lastFeedbackAtMs ?? 0;
+      if (otherFb > existingFb) {
+        existingMemory.lastFeedbackAtMs = otherFb;
+      }
+
+      for (const [paperId, paper] of Object.entries(other.pushedPapers ?? {})) {
+        const current = existing.pushedPapers[paperId];
+        if (!current) {
+          existing.pushedPapers[paperId] = { ...paper };
+          continue;
+        }
+
+        current.firstPushedAtMs = Math.min(current.firstPushedAtMs, paper.firstPushedAtMs);
+        const paperPushCount = Number.isFinite(paper.pushCount) ? Math.max(0, Math.floor(paper.pushCount)) : 0;
+        current.pushCount += paperPushCount;
+
+        if (paper.lastPushedAtMs > current.lastPushedAtMs) {
+          current.lastPushedAtMs = paper.lastPushedAtMs;
+          if (paper.title) current.title = paper.title;
+          if (paper.url) current.url = paper.url;
+          if (typeof paper.lastScore === "number" && Number.isFinite(paper.lastScore)) {
+            current.lastScore = paper.lastScore;
+          }
+          if (paper.lastReason) current.lastReason = paper.lastReason;
+        } else {
+          if (!current.title && paper.title) current.title = paper.title;
+          if (!current.url && paper.url) current.url = paper.url;
+          if (current.lastScore === undefined && typeof paper.lastScore === "number" && Number.isFinite(paper.lastScore)) {
+            current.lastScore = paper.lastScore;
+          }
+          if (!current.lastReason && paper.lastReason) current.lastReason = paper.lastReason;
+        }
+      }
+
+      const existingRuns = Number.isFinite(existing.totalRuns) ? Math.max(0, Math.floor(existing.totalRuns)) : 0;
+      const otherRuns = Number.isFinite(other.totalRuns) ? Math.max(0, Math.floor(other.totalRuns)) : 0;
+      existing.totalRuns = existingRuns + otherRuns;
+
+      const existingLastRun = existing.lastRunAtMs ?? 0;
+      const otherLastRun = other.lastRunAtMs ?? 0;
+      if (otherLastRun > existingLastRun) {
+        existing.lastRunAtMs = other.lastRunAtMs;
+        existing.lastStatus = other.lastStatus;
+      } else if (!existing.lastStatus && other.lastStatus) {
+        existing.lastStatus = other.lastStatus;
+      }
+
+      delete root.topics[otherKey];
+    }
+
     return existing;
   }
 
@@ -476,6 +608,28 @@ function sortPaperIdsByRecency(papers: Record<string, TopicPaperState>): string[
   return Object.values(papers)
     .sort((a, b) => b.lastPushedAtMs - a.lastPushedAtMs)
     .map((item) => item.id);
+}
+
+function recentPapersByRecency(
+  papers: Record<string, TopicPaperState>,
+  limit: number,
+): RecentPaperSummary[] {
+  const normalizedLimit = Math.max(1, Math.min(50, Math.floor(limit)));
+  return Object.values(papers)
+    .sort((a, b) => b.lastPushedAtMs - a.lastPushedAtMs)
+    .slice(0, normalizedLimit)
+    .map((item) => ({
+      id: item.id,
+      ...(item.title ? { title: item.title } : {}),
+      ...(item.url ? { url: item.url } : {}),
+      ...(typeof item.lastScore === "number" && Number.isFinite(item.lastScore)
+        ? { lastScore: item.lastScore }
+        : {}),
+      ...(item.lastReason ? { lastReason: item.lastReason } : {}),
+      firstPushedAtMs: item.firstPushedAtMs,
+      lastPushedAtMs: item.lastPushedAtMs,
+      pushCount: item.pushCount,
+    }));
 }
 
 async function appendPushLog(entry: Record<string, unknown>): Promise<void> {
@@ -678,7 +832,7 @@ export async function recordUserFeedback(args: {
 export async function getIncrementalStateStatus(args: {
   scope: string;
   topic: string;
-}): Promise<PrepareResult & { totalRuns: number; lastStatus?: string }> {
+}): Promise<PrepareResult & { totalRuns: number; lastStatus?: string; recentPapers: RecentPaperSummary[] }> {
   const root = await loadState();
   const topicState = getOrCreateTopicState(root, args.scope, args.topic);
   const memory = ensureTopicMemoryState(topicState);
@@ -700,5 +854,6 @@ export async function getIncrementalStateStatus(args: {
     ...(lastPushedAtMs ? { lastPushedAtMs } : {}),
     totalRuns: topicState.totalRuns,
     ...(topicState.lastStatus ? { lastStatus: topicState.lastStatus } : {}),
+    recentPapers: recentPapersByRecency(topicState.pushedPapers, 10),
   };
 }

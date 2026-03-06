@@ -44,7 +44,7 @@ metadata:
 
 ```bash
 cd $W/project && source .venv/bin/activate
-python run.py  # full epochs
+python3 run.py  # full epochs
 ```
 
 记录完整训练的 `[RESULT]` 输出。
@@ -67,7 +67,7 @@ python run.py  # full epochs
 
 ```bash
 # Example: 去掉 attention module
-python run.py --epochs 2 --ablation no_attention
+python3 run.py --epochs 2 --ablation no_attention
 ```
 
 ### Step 4: 实验分析→补充实验迭代（2 轮）
@@ -109,7 +109,7 @@ python run.py --epochs 2 --ablation no_attention
 
 ```bash
 cd $W/project && source .venv/bin/activate
-python run.py --experiment {exp_name}
+python3 run.py --experiment {exp_name}
 ```
 
 记录结果后，回到 4.1 进行下一轮分析（共 2 轮）。

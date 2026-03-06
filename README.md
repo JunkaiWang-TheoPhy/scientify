@@ -332,6 +332,7 @@ You can also check status anytime with:
 | `arxiv_search` | Search arXiv papers. Returns metadata (title, authors, abstract, ID). Does not download files. Supports sorting by relevance/date and date filtering. |
 | `arxiv_download` | Batch download papers by arXiv ID. Prefers .tex source files (PDF fallback). Requires absolute output directory path. |
 | `openalex_search` | Search cross-disciplinary academic papers via OpenAlex API. Returns DOI, authors, citation count, OA status. Broader coverage than arXiv. |
+| `openreview_lookup` | Lookup OpenReview evidence by title/ID/forum. Returns decision (if available), review rating/confidence aggregates, and concise review summaries for venue-risk analysis. |
 | `unpaywall_download` | Download open access PDFs by DOI via Unpaywall API. Non-OA papers are silently skipped (no failure). |
 | `github_search` | Search GitHub repositories. Returns repo name, description, stars, URL. Supports language filtering and sorting. |
 | `paper_browser` | Paginated browsing of large paper files (.tex/.md) to avoid loading thousands of lines into context. Returns specified line range with navigation info. |

@@ -68,13 +68,13 @@ $W/project/
 ```bash
 cd $W/project && uv venv .venv && source .venv/bin/activate
 uv pip install -r requirements.txt
-python -c "from data.dataset import *; print('data OK')"
+python3 -c "from data.dataset import *; print('data OK')"
 ```
 验证：import 无报错
 
 **3c. 模型架构**
 ```bash
-python -c "from model import *; import torch; x = torch.randn(2, ...); print(model(x).shape)"
+python3 -c "from model import *; import torch; x = torch.randn(2, ...); print(model(x).shape)"
 ```
 验证：输出 shape 正确
 
@@ -105,7 +105,7 @@ elif [ -f "requirements.txt" ]; then
 fi
 
 # 2 epoch 验证
-python run.py --epochs 2
+python3 run.py --epochs 2
 ```
 
 ### Step 5: 验证执行结果

@@ -49,7 +49,8 @@ const PaperSchema = Type.Object({
 
 export const ScientifyLiteratureStateToolSchema = Type.Object({
   action: Type.String({
-    description: 'Action: "prepare" | "record" | "feedback" | "status".',
+    description:
+      'Action: "prepare" | "record" | "feedback" | "status". `status` also returns `recent_papers` for follow-up traceability.',
   }),
   scope: Type.String({
     description: "Scope key used to isolate user/channel state.",
@@ -361,6 +362,16 @@ export function createScientifyLiteratureStateTool() {
             total_runs: status.totalRuns,
             last_status: status.lastStatus ?? null,
             last_pushed_at_ms: status.lastPushedAtMs ?? null,
+            recent_papers: status.recentPapers.map((paper) => ({
+              id: paper.id,
+              title: paper.title ?? null,
+              url: paper.url ?? null,
+              last_score: paper.lastScore ?? null,
+              last_reason: paper.lastReason ?? null,
+              first_pushed_at_ms: paper.firstPushedAtMs,
+              last_pushed_at_ms: paper.lastPushedAtMs,
+              push_count: paper.pushCount,
+            })),
           });
         }
 

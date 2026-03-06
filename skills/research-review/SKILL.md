@@ -75,7 +75,7 @@ metadata:
 | 检查项 | 方法 |
 |--------|------|
 | 数据集是否真实拉取 | 检查 `data/` 目录下是否有实际数据文件（非空文件），检查下载脚本/代码是否真正执行了网络请求或本地读取 |
-| 数据加载代码正确性 | 实际执行数据加载代码，验证 shape、dtype、样本数是否与 plan 一致：`python -c "from data.dataset import *; ds = ...; print(len(ds), ds[0])"` |
+| 数据加载代码正确性 | 实际执行数据加载代码，验证 shape、dtype、样本数是否与 plan 一致：`python3 -c "from data.dataset import *; ds = ...; print(len(ds), ds[0])"` |
 | Mock 数据标注 | 搜索 `# MOCK DATA` 注释；如果使用 mock 数据但未声明，标记为 NEEDS_REVISION |
 
 #### B. 算法实现审查
@@ -208,7 +208,7 @@ metadata:
 3. 修改 `$W/project/` 中的代码（修复 bug、补全缺失实现）
 4. 重新执行：
    ```bash
-   cd $W/project && source .venv/bin/activate && python run.py --epochs 2
+   cd $W/project && source .venv/bin/activate && python3 run.py --epochs 2
    ```
 5. 读取执行输出，验证修复
 6. **重新执行 Step 2-4**（提取概念清单 → 逐项检查 → 写报告），写入 `judge_v{N+1}.md`
@@ -269,7 +269,7 @@ metadata:
 1. 根据建议**逐项尝试**（从优先级高的开始）
 2. 每次修改后：
    ```bash
-   cd $W/project && source .venv/bin/activate && python run.py --epochs 2
+   cd $W/project && source .venv/bin/activate && python3 run.py --epochs 2
    ```
 3. 读取新的执行输出，对比改进前后：
    - Loss reduction 是否提升？（如 0.9% → 12%）

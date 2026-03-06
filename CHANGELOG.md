@@ -1,3 +1,9 @@
+## [1.10.2](https://github.com/tsingyuai/scientify/compare/v1.10.1...v1.10.2) (2026-03-06)
+
+### Bug Fixes
+
+* prevent research jobs from degrading to reminders and improve recurring report delivery ([ed343fc](https://github.com/tsingyuai/scientify/commit/ed343fc350e41522c017296cbab4757f68976e97))
+
 ## [1.10.1](https://github.com/tsingyuai/scientify/compare/v1.10.0...v1.10.1) (2026-03-05)
 
 ### Bug Fixes

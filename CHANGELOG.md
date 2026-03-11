@@ -1,3 +1,9 @@
+## [1.12.1](https://github.com/tsingyuai/scientify/compare/v1.12.0...v1.12.1) (2026-03-11)
+
+### Bug Fixes
+
+* optimize hypothesis checklists in user output ([81b5f35](https://github.com/tsingyuai/scientify/commit/81b5f356a130150e52c59e567d830049a088c3bb))
+
 ## [1.12.0](https://github.com/tsingyuai/scientify/compare/v1.11.0...v1.12.0) (2026-03-07)
 
 ### Features

@@ -94,6 +94,8 @@ unpaywall_download({ dois: ["{doi1}", "{doi2}", ...] })
 
 然后用 `sessions_send` 通知 main session。
 
+**说明：** 发送给用户的内容不要输出“触发条件检查表/列表”，只需解释为什么这个假设合理、哪些已读内容启发了它。
+
 **没有想法** → 跳过，不要硬凑。
 
 ## Step 5: Log & Finish

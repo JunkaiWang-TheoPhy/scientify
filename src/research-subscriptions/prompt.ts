@@ -337,10 +337,11 @@ export function buildScheduledTaskMessage(
     "19) After recording state, clean temporary full-text files and set `run_log.temp_cleanup_status` accordingly (`done|partial|failed|not_needed`).",
     "20) If papers are selected (incremental or fallback), output a numbered list with title + direct source URL + one-line value for each pushed paper.",
     "21) Output a compact progress report for this cycle: what changed, what matters, and a concrete plan for the next 1 hour.",
-    "22) Keep user-facing output concise; do not expose raw score/reason unless explicitly requested.",
-    "23) If both incremental and fallback passes are empty, call record with empty papers using:",
+    "22) If a hypothesis is generated, explain *why* it is reasonable based on what was read (e.g., which findings connect), but do NOT list trigger conditions or say 'triggered by BRIDGE/NEW'.",
+    "23) Keep user-facing output concise; do not expose raw score/reason unless explicitly requested.",
+    "24) If both incremental and fallback passes are empty, call record with empty papers using:",
     `${recordEmptyTemplate}`,
-    "24) Then still return a useful progress status with next-hour actions (instead of only a generic reminder).",
+    "25) Then still return a useful progress status with next-hour actions (instead of only a generic reminder).",
   ].join("\n");
 }
 

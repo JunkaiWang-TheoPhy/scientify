@@ -1,277 +1,226 @@
-# Scientify
+<p align="center">
+  <strong>Scientify</strong><br>
+  <em>持续新陈代谢的 AI 科研系统</em>
+</p>
 
-**AI-powered research workflow automation for OpenClaw.**
+<p align="center">
+  <a href="https://www.npmjs.com/package/scientify"><img src="https://img.shields.io/npm/v/scientify?style=for-the-badge&logo=npm&logoColor=white" alt="npm version"></a>
+  <a href="https://github.com/tsingyuai/scientify"><img src="https://img.shields.io/github/stars/tsingyuai/scientify?style=for-the-badge&logo=github" alt="GitHub stars"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://github.com/openclaw/openclaw"><img src="https://img.shields.io/badge/OpenClaw-plugin-00FF9F?style=for-the-badge" alt="OpenClaw plugin"></a>
+</p>
 
-Scientify is an [OpenClaw](https://github.com/openclaw/openclaw) plugin that automates the full academic research pipeline — from literature survey to experiment execution — using LLM-driven sub-agents.
-
-**Website:** [scientify.tech](https://scientify.tech) | [中文文档](./README.zh.md)
+<p align="center">
+  <a href="https://scientify.tech">官网</a> · <a href="./README.en.md">English</a> · <a href="https://github.com/tsingyuai/scientify/issues">Issues</a>
+</p>
 
 ---
 
-## What It Does
+## 它能做什么
 
-Scientify turns a single research prompt into a complete automated pipeline. Each phase runs as an independent sub-agent — the orchestrator verifies outputs between steps and passes context forward.
+> [!IMPORTANT]
+> Scientify 不是一个"问一次答一次"的 AI 工具。它像一个真正的研究伙伴——**持续思考、持续积累、持续交付**。
 
-### Scenario 1 — End-to-End Research Pipeline
+### 1. 新陈代谢：持续思考，而非一次性回答
 
-> *"Research scaling laws for classical ML classifiers on Fashion-MNIST"*
+现有 AI 科研工具的工作方式是**批处理**——给个问题，跑一遍 pipeline，输出报告，结束。下次再问同一个方向，从零开始。跑 10 次和跑 1 次没有本质区别。
 
-The **research-pipeline** orchestrator runs all 6 phases in sequence, spawning a dedicated sub-agent for each:
+但人类研究者不是这样工作的。你每天在读、在跑、在想。昨天的失败改变了今天的阅读，上周的对话改变了这周的实验设计。
 
-```mermaid
-flowchart LR
-    A["Literature\nSurvey"] --> B["Deep\nAnalysis"] --> C["Implementation\nPlan"] --> D["Code\nImplementation"] --> E["Automated\nReview"] --> F["Full\nExperiment"]
+Scientify 采用**新陈代谢模式**——持续地摄入、消化、沉淀、再摄入：
+
+- **持续摄入**：每天自动跟进前沿论文，不需要你手动触发
+- **消化沉淀**：将新知识与已有积累关联，写入持久化知识库
+- **假设进化**：淘汰无效假设，进化有效路径，每一轮失败都是下一轮的养料
+- **主动交付**：发现值得关注的进展后自动验证，验证通过主动推送给你
+
+用得越久，它研究越深入。
+
+<p align="center">
+  <img src="docs/assets/showcase/3.png" width="50%" alt="Scientify 通过飞书主动推送研究进展">
+  <br>
+  <sub>Scientify 通过飞书主动向研究者推送最新发现，并结合知识库产生思考</sub>
+</p>
+
+### 2. 端到端自主研究：做到 SOTA 级成果
+
+给它一个课题，它自己把研究做完，跑出性能超越外部文献水平的新算法。
+
+多 Agent 迭代驱动：编排器持有假设和全部积累，只调度不写代码；每轮 spawn 独立子 agent 执行实现、审查、实验；每一轮失败都沉淀为下一轮的经验，假设越修正越精确，直到发现更优的方法。
+
+### Showcase：自主发现 KV2 算法并达到领域领先性能
+
+> **目标**：针对长上下文 LLM 推理，设计一种策略，同时降低首 token 时延和单请求通信量。
+>
+> Scientify 自主完成文献调研、假设生成、代码实现与实验验证，提出 **KV2 算法**，相较于现有研究，TTFT p95和bytes/request均有不同程度降低，性能达到 SOTA 水平。
+
+<p align="center">
+  <img src="docs/assets/showcase/1.png" width="80%" alt="KV2 算法实验结果">
+  <br>
+  <sub>KV2 算法在首 token 时延与通信量上的实验结果</sub>
+</p>
+
+<p align="center">
+  <img src="docs/assets/showcase/2.png" width="80%" alt="KV2 与现有方法对比">
+  <br>
+  <sub>KV2 与现有方法的 SOTA 对比</sub>
+</p>
+
+---
+
+## 架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  研究者                                                      │
+│  对话 · 投喂材料 · 判断假设                                    │
+└──────────────┬──────────────────────────────┬───────────────┘
+               ↓                              ↓
+┌──────────────────────────┐   ┌──────────────────────────────┐
+│  Agent 层                 │   │  知识库（持久化）               │
+│                          │   │                              │
+│  Heartbeat  每天定时唤醒  │←→│  _index.md                   │
+│  Reflection 自主跨领域探索│   │  topic-*.md                  │
+│  Pipeline   假设验证执行  │   │  hypotheses/                 │
+│                          │   │  experiments/                │
+└──────────┬───────────────┘   │  conversations/              │
+           ↓                   │                              │
+┌──────────────────────────┐   │  Markdown 文件 · Git 管理     │
+│  工具层                   │   │  完全可审计 · 你也能编辑       │
+│                          │──→│                              │
+│  arxiv_search            │   └──────────────────────────────┘
+│  openalex_search         │
+│  github_search           │
+│  paper_browser           │
+│  code_executor           │
+└──────────────────────────┘
 ```
 
-<details>
-<summary><b>What each phase produces</b></summary>
+四个部分，各司其职：
 
-| Phase | What Happens | Output File |
-|:------|:-------------|:------------|
-| **1. Literature Survey** | Search arXiv + OpenAlex, filter, download .tex sources, cluster by direction | `survey/report.md` |
-| **2. Deep Analysis** | Extract formulas, map methods to code, build cross-comparison | `survey_res.md` |
-| **3. Implementation Plan** | Design 4-part plan — Dataset / Model / Training / Testing | `plan_res.md` |
-| **4. Code Implementation** | Write ML code in `uv`-isolated venv, validate with 2-epoch run | `project/run.py` |
-| **5. Automated Review** | Review code → fix issues → rerun → re-review (up to 3 rounds) | `iterations/judge_v*.md` |
-| **6. Full Experiment** | Complete training + ablation studies with final analysis | `experiment_res.md` |
+### 研究者
 
-</details>
+你是系统的一部分。通过对话注入判断、投喂材料、确认或否决假设。你的参与让新陈代谢的方向更准确，让研究假设更精确。
 
----
+### Agent 层
 
-### Scenario 2 — Idea Generation
+三个循环驱动新陈代谢：
 
-> *"Explore recent advances in protein folding and generate innovative research ideas"*
+| Agent | 做什么 | 触发方式 |
+|-------|--------|---------|
+| **Heartbeat** | 每天跟进前沿论文，发现关联后自主验证，验证通过主动推送给你 | 定时自动唤醒 |
+| **Reflection** | 跨领域探索，将不同主题的知识关联起来，发现意想不到的联系 | Heartbeat 触发 / 研究者触发 |
+| **Pipeline** | 端到端研究执行——文献调研 → 深度分析 → 实现 → 审查 → 实验 | 研究者触发 / Reflection 触发 |
 
-The **idea-generation** skill surveys the field, then:
+Pipeline 内部是多 Agent 迭代：编排器持有假设，spawn 子 agent 执行实现（`implement`）、审查（`review`）、实验（`experiment`）。每轮失败沉淀为经验，假设越修正越精确。
 
-1. Generates **5 diverse research ideas** grounded in real papers
-2. Scores each on novelty, feasibility, and impact
-3. Selects the best and produces an **enhanced proposal** with detailed methodology
+### 工具层
 
-> [!TIP]
-> **Output:** `ideas/selected_idea.md` — a ready-to-develop research proposal.
+Agent 的手和眼：
 
----
+| 工具 | 能力 |
+|------|------|
+| `arxiv_search` / `openalex_search` | 搜索学术论文（arXiv + 跨学科） |
+| `github_search` | 搜索开源代码实现 |
+| `paper_browser` | 分页精读论文，避免上下文溢出 |
+| `code_executor` | 在 `uv` 隔离环境中执行实验代码 |
 
-### Scenario 3 — Standalone Literature Survey
+> Scientify 运行在 [OpenClaw](https://github.com/openclaw/openclaw) 之上，天然可调用平台的 MCP 服务器（Slack / 飞书推送）、浏览器自动化（付费文献下载）、多会话并发（多方向并行研究）等能力。
 
-> *"Survey the latest papers on vision-language models for medical imaging"*
+### 知识库
 
-Run just the survey phase when you need a structured reading list without running the full pipeline:
+所有积累持久化为 Markdown 文件，Git 管理，每一行变化都可追溯。你和 Agent 读写的是同一组文件：
 
-- Searches **arXiv** (CS/ML) and **OpenAlex** (cross-disciplinary, broader coverage)
-- Downloads `.tex` source files; retrieves open-access PDFs via **Unpaywall**
-- Clusters papers by sub-topic and extracts key findings
-- Generates a structured survey report
-
-> [!TIP]
-> **Output:** `survey/report.md` + raw papers in `papers/_downloads/`
-
----
-
-### Scenario 4 — Review Paper Drafting
-
-> *"Write a survey paper based on my project's research outputs"*
-
-After completing a research pipeline (or just a literature survey + deep analysis), the **write-review-paper** skill assembles a draft:
-
-- Synthesizes survey reports, analysis notes, and comparison tables
-- Structures the paper with Introduction, Related Work, Methods, and Discussion
-- Produces a publication-ready draft in Markdown
-
-> [!TIP]
-> **Output:** a survey/review paper draft based on all accumulated project artifacts.
-
----
-
-### Advanced Scenarios — Combining OpenClaw Platform Capabilities
-
-As an OpenClaw plugin, Scientify can leverage the platform's MCP servers, browser automation, multi-session concurrency, and more to build powerful composite workflows.
-
----
-
-### Scenario 5 — Literature Monitoring Bot
-
-> *"Automatically search for new diffusion model papers every day and push a digest to our Slack channel"*
-
-Combine OpenClaw's **MCP integration** (Slack / Feishu / Email) with **scheduled triggers** to build automated literature monitoring:
-
-```mermaid
-flowchart LR
-    A["Scheduled Trigger\n(cron / webhook)"] --> B["arxiv_search\n+ openalex_search"]
-    B --> C["LLM Filtering\n+ Summary"]
-    C --> D["Push to\nSlack / Feishu / Email"]
+```
+knowledge_state/
+├── _index.md              # 研究全局索引
+├── topic-*.md             # 按主题组织的知识沉淀
+├── hypotheses/            # 假设演化记录
+├── experiments/           # 实验结果与分析
+├── paper_notes/           # 逐篇论文深读记录
+└── logs/                  # 每轮新陈代谢的运行日志
 ```
 
-1. External cron job or OpenClaw webhook triggers a session periodically
-2. Scientify's `arxiv_search` + `openalex_search` fetch the latest papers
-3. LLM scores and filters by your research interests, generates concise summaries
-4. MCP tools push the digest to Slack, Feishu, or email
-
-> [!NOTE]
-> **Requires:** A configured MCP server (e.g., `slack-mcp`, `feishu-mcp`). OpenClaw supports declaring MCP servers in `openclaw.json`.
-
 ---
 
-### Scenario 6 — Download Paywalled Papers via Browser
-
-> *"Download these 5 IEEE papers using my university VPN"*
-
-Scientify's built-in `arxiv_download` and `unpaywall_download` only handle open-access papers. For paywalled content, combine with OpenClaw's **browser automation** (Playwright MCP):
-
-```mermaid
-flowchart LR
-    A["Scientify\nprovides paper URLs"] --> B["Playwright MCP\nopens browser"]
-    B --> C["Institutional Proxy\nauto-authenticate"]
-    C --> D["Navigate to Publisher\ndownload PDF"]
-```
-
-- OpenClaw launches a controlled browser via Playwright MCP server
-- The browser accesses publisher sites through your institutional proxy / VPN
-- Automatically navigates to the paper page and downloads the PDF to `papers/_downloads/`
-- Works with IEEE, Springer, Elsevier, ACM, and other subscription-based publishers
-
-> [!NOTE]
-> **Requires:** Playwright MCP server configured, and institutional network access to the papers.
-
----
-
-### Scenario 7 — Multi-Topic Parallel Research
-
-> *"Research 3 directions simultaneously: LoRA fine-tuning, MoE architectures, KV-Cache optimization"*
-
-Leverage OpenClaw's **multi-session concurrency** (`sessions_spawn`) to run multiple research pipelines in parallel:
-
-```mermaid
-flowchart TD
-    O["Main Agent\n(Orchestrator)"] --> A["Sub-session 1\nLoRA Fine-tuning"]
-    O --> B["Sub-session 2\nMoE Architectures"]
-    O --> C["Sub-session 3\nKV-Cache Optimization"]
-    A --> D["Independent project dirs\nisolated from each other"]
-    B --> D
-    C --> D
-```
-
-- Each sub-topic runs a full pipeline with its own project directory
-- The main agent collects results and produces a cross-topic comparative analysis
-- Ideal for quickly scouting multiple directions during the topic-selection phase of a survey paper
-
----
-
-### Scenario 8 — Interactive Paper Reading Assistant
-
-> *"Walk me through 'Attention Is All You Need' section by section, explain every formula"*
-
-Combine OpenClaw's conversational interface with Scientify's `paper_browser` tool for interactive deep reading:
-
-- `paper_browser` loads papers page-by-page, avoiding context overflow
-- Discuss section by section: LLM explains derivations, compares with related work, highlights contributions
-- Follow up on implementation details — LLM uses `github_search` to find corresponding open-source code
-- All analysis notes are saved to `notes/paper_{id}.md`
-
----
-
-### Scenario 9 — Paper-to-Reproducible-Experiment
-
-> *"Reproduce the results from Table 2 of this paper"*
-
-End-to-end automation: understand paper → implement code → run experiment → compare results:
-
-```mermaid
-flowchart LR
-    A["paper_browser\nDeep read paper"] --> B["research-plan\nExtract experiment design"]
-    B --> C["research-implement\nWrite code"]
-    C --> D["research-experiment\nRun experiment"]
-    D --> E["Compare with\npaper's Table 2"]
-```
-
-1. `paper_browser` reads the method and experiment sections in detail
-2. `research-plan` extracts experiment config (hyperparameters, datasets, metrics)
-3. `research-implement` generates code and validates in a `uv`-isolated environment
-4. `research-experiment` runs the full experiment
-5. LLM automatically compares your results against the paper's reported numbers
-
----
-
-## Prerequisites
+## 环境要求
 
 - **Node.js** >= 18
-- **Python 3** + **uv** (for ML code execution)
+- **Python 3** + **uv**（用于 ML 代码执行）
 - **git**
 
 ---
 
-## Install OpenClaw
+## 安装 OpenClaw
 
 ```bash
-# Install OpenClaw globally
-pnpm add -g openclaw    # or: npm install -g openclaw
+# 全局安装 OpenClaw
+pnpm add -g openclaw    # 或: npm install -g openclaw
 
-# Run onboarding wizard (configures model provider, API key, workspace)
+# 运行引导向导（配置模型提供商、API Key、工作空间）
 openclaw onboard
 
-# Start the gateway (runs the WebUI server)
+# 启动 Gateway（WebUI 服务器）
 openclaw gateway
 ```
 
-After `openclaw gateway`, the WebUI is available at **http://127.0.0.1:18789/** (default port).
+启动后，WebUI 地址为 **http://127.0.0.1:18789/**（默认端口）。
 
-> **Proxy users:** If you have `http_proxy` set, access the WebUI with `--noproxy 127.0.0.1` or configure your browser accordingly.
+> **代理用户注意：** 如果你设置了 `http_proxy`，访问 WebUI 时需加 `--noproxy 127.0.0.1`，或在浏览器中配置代理例外。
 
 ---
 
-## Install Scientify
+## 安装 Scientify
 
-### From npm (recommended)
+### 从 npm 安装（推荐）
 
 ```bash
 openclaw plugins install scientify
 ```
 
-The plugin installs to `~/.openclaw/extensions/scientify/` and is automatically enabled.
+插件安装到 `~/.openclaw/extensions/scientify/`，自动启用。
 
-### From source (development)
+### 从源码安装（开发用）
 
 ```bash
 git clone https://github.com/user/scientify.git
 cd scientify && pnpm install && pnpm build
 
-# Link as dev plugin
+# 链接为开发插件
 openclaw plugins install -l ./
 ```
 
-### Verify installation
+### 验证安装
 
 ```bash
 openclaw plugins list
-# Should show: scientify (enabled)
+# 应显示: scientify (enabled)
 ```
 
-After installation, **restart the gateway** to load the plugin:
+安装后需 **重启 Gateway** 以加载插件：
 
 ```bash
-# Stop the running gateway (Ctrl+C), then:
+# 停止运行中的 Gateway（Ctrl+C），然后：
 openclaw gateway
 ```
 
 ---
 
-## Usage via WebUI
+## 通过 WebUI 使用
 
-### 1. Open the WebUI
+### 1. 打开 WebUI
 
-Navigate to **http://127.0.0.1:18789/** in your browser.
+浏览器访问 **http://127.0.0.1:18789/**。
 
-### 2. Start a research task
+### 2. 开始研究任务
 
-Type a research prompt in the chat. Scientify skills are auto-matched by the LLM:
+在聊天框中输入研究提示，Scientify 的 skill 会被 LLM 自动匹配：
 
 ```
-Research "transformer efficiency" and generate some innovative ideas
+研究 "transformer efficiency"，分析论文并生成创新想法
 ```
 
-Or invoke a specific skill directly with a slash command:
+或者用斜杠命令直接调用特定 skill：
 
 ```
 /research-pipeline
@@ -279,203 +228,52 @@ Or invoke a specific skill directly with a slash command:
 /idea-generation
 ```
 
-### 3. Monitor sub-agent progress
+### 3. 监控子 agent 进度
 
-When the orchestrator spawns sub-agents, you'll see:
-- **Spawn notification** — "Phase 1: Literature Survey started"
-- **Completion announcement** — automatic message when the sub-agent finishes
-- **Progress updates** — the orchestrator verifies outputs and advances to the next phase
+编排器 spawn 子 agent 后，你会看到：
+- **启动通知** — "Phase 1: Literature Survey 已启动"
+- **完成通知** — 子 agent 完成后自动发送消息
+- **进度推进** — 编排器验证产出后自动进入下一阶段
 
-You can also check status anytime with:
+随时查看状态：
 
 ```
 /research-status
 ```
 
-### 4. Manage projects
+### 4. 管理项目
 
 ```
-/projects              # List all projects
-/project-switch <id>   # Switch to a different project
-/papers                # List downloaded papers
-/ideas                 # List generated ideas
-```
-
----
-
-## Skills
-
-### Pipeline Skills (LLM-powered)
-
-| Skill | Slash Command | Description |
-|-------|---------------|-------------|
-| **research-pipeline** | `/research-pipeline` | Orchestrator. Spawns sub-agents for each phase, verifies outputs between steps. |
-| **research-collect** | `/research-collect` | Search arXiv → filter → download .tex sources → cluster → generate survey report. |
-| **research-survey** | `/research-survey` | Deep analysis of papers: extract formulas, map to code, produce method comparison table. |
-| **research-plan** | `/research-plan` | Create 4-part implementation plan (Dataset/Model/Training/Testing) from survey results. |
-| **research-implement** | `/research-implement` | Implement ML code from plan, run 2-epoch validation with `uv` venv isolation. |
-| **research-review** | `/research-review` | Review implementation. Iterates fix → rerun → review up to 3 times. |
-| **research-experiment** | `/research-experiment` | Full training + ablation experiments. Requires review PASS. |
-| **idea-generation** | `/idea-generation` | Generate 5 innovative research ideas from a topic, select and enhance the best one. |
-
-### Standalone Skills
-
-| Skill | Description |
-|-------|-------------|
-| **write-review-paper** | Draft a review/survey paper from project research outputs. |
-| **research-subscription** | Create/list/remove scheduled Scientify jobs via `scientify_cron_job` (research digests or plain reminders). |
-
-### Tools (available to LLM)
-
-| Tool | Description |
-|------|-------------|
-| `arxiv_search` | Search arXiv papers. Returns metadata (title, authors, abstract, ID). Does not download files. Supports sorting by relevance/date and date filtering. |
-| `arxiv_download` | Batch download papers by arXiv ID. Prefers .tex source files (PDF fallback). Requires absolute output directory path. |
-| `openalex_search` | Search cross-disciplinary academic papers via OpenAlex API. Returns DOI, authors, citation count, OA status. Broader coverage than arXiv. |
-| `openreview_lookup` | Lookup OpenReview evidence by title/ID/forum. Returns decision (if available), review rating/confidence aggregates, and concise review summaries for venue-risk analysis. |
-| `unpaywall_download` | Download open access PDFs by DOI via Unpaywall API. Non-OA papers are silently skipped (no failure). |
-| `github_search` | Search GitHub repositories. Returns repo name, description, stars, URL. Supports language filtering and sorting. |
-| `paper_browser` | Paginated browsing of large paper files (.tex/.md) to avoid loading thousands of lines into context. Returns specified line range with navigation info. |
-| `scientify_cron_job` | Manage scheduled Scientify jobs from the model (`upsert`/`list`/`remove`). Main fields: `action`, `scope`, `schedule`, `topic`, `project`, `message`, `max_papers`, `recency_days`, `candidate_pool`, `score_weights`, `sources`, `channel`, `to`, `no_deliver`, `job_id`. |
-| `scientify_literature_state` | Persistent incremental state for subscriptions: `prepare` dedupe context (+ memory hints), `record` pushed papers + project `knowledge_state` artifacts (including `paper_notes` deep-reading fields and full-text cleanup run logs), `feedback` lightweight preference memory, and `status` inspection with traceable logs. |
-
-### Commands (direct, no LLM)
-
-| Command | Description |
-|---------|-------------|
-| `/research-status` | Show workspace status and active project |
-| `/papers` | List downloaded papers with metadata |
-| `/ideas` | List generated ideas |
-| `/projects` | List all projects |
-| `/project-switch <id>` | Switch active project |
-| `/project-delete <id>` | Delete a project |
-| `/research-subscribe ...` | Create/update scheduled Scientify jobs (supports `daily`, `weekly`, `every`, `at`, `cron`; options: `--channel`, `--to`, `--topic`, `--project`, `--message`, `--max-papers`, `--recency-days`, `--candidate-pool`, `--score-weights`, `--sources`, `--no-deliver`) |
-| `/research-subscriptions` | Show your scheduled Scientify jobs |
-| `/research-unsubscribe [job-id]` | Remove your scheduled Scientify jobs (or a specific job) |
-
-`/research-subscribe` examples:
-- `/research-subscribe daily 09:00 Asia/Shanghai` (auto-deliver to current chat sender/channel when possible)
-- `/research-subscribe every 2h --channel feishu --to ou_xxx`
-- `/research-subscribe at 2m --channel feishu --to ou_xxx`
-- `/research-subscribe weekly mon 09:30 --channel telegram --to 123456789`
-- `/research-subscribe at 2m --channel webui` (`webui`/`tui` are aliases of `last`)
-- `/research-subscribe daily 08:00 --topic "LLM alignment"`
-- `/research-subscribe daily 08:00 --topic "LLM alignment" --project llm-alignment`
-- `/research-subscribe daily 08:00 --topic "LLM alignment" --max-papers 5 --recency-days 30 --sources arxiv,openalex`
-- `/research-subscribe daily 08:00 --topic "LLM alignment" --candidate-pool 12 --score-weights relevance:45,novelty:20,authority:25,actionability:10`
-- `/research-subscribe at 1m --message "Time to drink coffee."`
-- `/research-subscribe daily 09:00 --no-deliver` (background only, no push)
-
-Behavior notes:
-- Scoped upsert: per sender/channel scope, creating a new subscription replaces the previous one in that scope.
-- Delivery aliases: `--channel webui` and `--channel tui` map to `last`; they do not require `--to`.
-- Reminder-safe fallback: if `topic` looks like a plain reminder (for example "remind me to sleep"), Scientify auto-routes it as a reminder message instead of literature pipeline.
-- One-shot topic (`at ... --topic ...`) uses focused retrieval of representative papers; recurring schedules (`daily/weekly/every/cron`) use incremental tracking mode.
-- Recurring incremental mode uses candidate-pool ranking before Top-K selection; if no unseen paper is found, it runs one representative fallback pass before returning empty.
-- Default `max_papers` is 5 unless overridden by `--max-papers`.
-- Built-in quality gates for research records: core full-text coverage >= 80%, evidence-binding rate >= 90%, citation error rate < 2%. Runs failing gates are downgraded to `degraded_quality`.
-- Lightweight preference memory is stored backend-only (keyword/source affinities) and used to rerank future pushes quietly.
-- Incremental dedupe + memory state is persisted under `~/.openclaw/workspace/scientify/` (`literature-state.json`, `literature-push-log.jsonl`).
-- Project-level research traceability is persisted under `~/.openclaw/workspace/projects/{project-id}/knowledge_state/`.
-- Full-text-first scheduled runs store per-paper deep-reading notes (domain/subdomains/cross-domain links/research goal/approach/design/contributions/practical insights/must-understand points/limitations/evidence anchors) under `knowledge_state/paper_notes/`.
-- Full-text files should be downloaded to a temporary directory and cleaned after each run; cleanup result is tracked in `knowledge_state` run logs.
-- Storage: subscription jobs are stored in OpenClaw cron storage; knowledge artifacts are stored in project workspace files.
-- Global inspect: `openclaw cron list --all --json`
-
----
-
-## Workspace Structure
-
-All research data is organized under `~/.openclaw/workspace/projects/`:
-
-```
-projects/
-├── .active                        # Current project ID
-├── scaling-law-fashion-mnist/     # Example project
-│   ├── project.json               # Metadata
-│   ├── task.json                  # Task definition
-│   ├── papers/
-│   │   ├── _meta/                 # Paper metadata (*.json)
-│   │   └── _downloads/            # Raw .tex/.pdf files
-│   ├── survey/
-│   │   └── report.md              # Literature survey report
-│   ├── notes/                     # Per-paper deep analysis
-│   │   └── paper_{arxiv_id}.md
-│   ├── survey_res.md              # Method comparison table
-│   ├── plan_res.md                # Implementation plan
-│   ├── project/                   # ML code
-│   │   ├── run.py
-│   │   └── requirements.txt
-│   ├── ml_res.md                  # Implementation results
-│   ├── iterations/                # Review iterations
-│   │   └── judge_v*.md
-│   ├── experiment_res.md          # Final experiment results
-│   ├── ideas/                     # Generated ideas
-│       ├── idea_*.md
-│       └── selected_idea.md
-│   └── knowledge_state/           # Scheduled research state artifacts
-│       ├── knowledge/
-│       ├── paper_notes/           # Per-paper deep-reading records
-│       ├── daily_changes/
-│       ├── hypotheses/
-│       ├── logs/
-│       ├── state.json
-│       └── events.jsonl
-└── another-project/
+/projects              # 列出所有项目
+/project-switch <id>   # 切换项目
+/papers                # 列出已下载论文
+/ideas                 # 列出已生成想法
 ```
 
 ---
 
-## Configuration
+## 已知限制
 
-Plugin settings in `~/.openclaw/openclaw.json`:
-
-```json
-{
-  "plugins": {
-    "entries": {
-      "scientify": {
-        "enabled": true
-      }
-    }
-  }
-}
-```
-
-### Plugin management
-
-```bash
-openclaw plugins list               # List installed plugins
-openclaw plugins enable scientify    # Enable
-openclaw plugins disable scientify   # Disable
-openclaw plugins update scientify    # Update to latest
-openclaw plugins doctor              # Diagnose issues
-```
+- **子 agent 超时**：每个子 agent 超时 30 分钟（`runTimeoutSeconds: 1800`）。复杂文献调研可能需要更长时间。
+- **GPU/Sandbox**：代码默认在宿主机直接执行。OpenClaw sandbox 暂不支持 GPU 透传。
+- **模型依赖**：研究质量与使用的 LLM 模型强相关。推荐 Claude Opus 4.5+ 或 GPT-5+。
 
 ---
 
-## Known Limitations
-
-- **Sub-agent timeout**: Each sub-agent has a 30-minute timeout (`runTimeoutSeconds: 1800`). Complex literature surveys with many papers may need longer.
-- **GPU/Sandbox**: Code execution runs on host by default. OpenClaw sandbox does not support GPU passthrough yet.
-- **Model dependency**: Research quality depends heavily on the LLM model used. Claude Opus 4.5+ or GPT-5+ recommended.
-
----
-
-## Development
+## 开发
 
 ```bash
 git clone https://github.com/user/scientify.git
 cd scientify
 pnpm install
-pnpm build          # Build TypeScript
-pnpm dev            # Watch mode
+pnpm build          # 构建 TypeScript
+pnpm dev            # 监听模式
 
-# Link to OpenClaw for testing
+# 链接到 OpenClaw 测试
 openclaw plugins install -l ./
 ```
 
-See [CLAUDE.md](./CLAUDE.md) for version update SOP and contribution guide.
+参见 [CLAUDE.md](./CLAUDE.md) 了解版本更新流程和贡献指南。
 
 ---
 

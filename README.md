@@ -1,5 +1,5 @@
+<h1 align="center">Scientify</h1>
 <p align="center">
-  <strong>Scientify</strong><br>
   <em>持续新陈代谢的 AI 科研系统</em>
 </p>
 
@@ -52,12 +52,12 @@ Scientify 采用**新陈代谢模式**——持续地摄入、消化、沉淀、
 
 > **目标**：针对长上下文 LLM 推理，设计一种策略，同时降低首 token 时延和单请求通信量。
 >
-> Scientify 自主完成文献调研、假设生成、代码实现与实验验证，提出 **KV2 算法**，相较于现有研究，TTFT p95和bytes/request均有不同程度降低，性能达到 SOTA 水平。
+> Scientify 自主完成文献调研、假设生成、代码实现与消融实验验证，提出 **KV2 算法**，相较于现有研究，TTFT p95和bytes/request均有不同程度降低，性能达到 SOTA 水平。
 
 <p align="center">
   <img src="docs/assets/showcase/1.png" width="80%" alt="KV2 算法实验结果">
   <br>
-  <sub>KV2 算法在首 token 时延与通信量上的实验结果</sub>
+  <sub>Scientify 独立产出的学术论文，报道KV2的设计思路与结果</sub>
 </p>
 
 <p align="center">

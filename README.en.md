@@ -1,5 +1,5 @@
+<h1 align="center">Scientify</h1>
 <p align="center">
-  <strong>Scientify</strong><br>
   <em>Continuous Knowledge Metabolism for AI Research</em>
 </p>
 

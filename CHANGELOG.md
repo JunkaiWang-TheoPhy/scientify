@@ -7,6 +7,17 @@
 ### Documentation
 
 * README file and add showcase images ([34c9636](https://github.com/tsingyuai/scientify/commit/34c9636b89c71b6f32bb0ac5dca4554b7e50d081))
+* update README ([bee351a](https://github.com/tsingyuai/scientify/commit/bee351a159836797303643a1c64de2ad71505b1b))
+
+## [1.12.1](https://github.com/tsingyuai/scientify/compare/v1.12.0...v1.12.1) (2026-03-25)
+
+### Bug Fixes
+
+* optimize hypothesis checklists in user output ([81b5f35](https://github.com/tsingyuai/scientify/commit/81b5f356a130150e52c59e567d830049a088c3bb))
+
+### Documentation
+
+* README file and add showcase images ([34c9636](https://github.com/tsingyuai/scientify/commit/34c9636b89c71b6f32bb0ac5dca4554b7e50d081))
 
 ## [1.12.1](https://github.com/tsingyuai/scientify/compare/v1.12.0...v1.12.1) (2026-03-11)
 

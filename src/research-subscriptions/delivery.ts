@@ -1,4 +1,4 @@
-import type { PluginCommandContext } from "openclaw";
+import type { PluginCommandContext } from "../types.js";
 import { ALLOWED_DELIVERY_CHANNELS, DELIVERY_LAST_ALIASES } from "./constants.js";
 import type { DeliveryTarget, SubscriptionOptions } from "./types.js";
 

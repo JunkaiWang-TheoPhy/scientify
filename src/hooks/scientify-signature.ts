@@ -1,4 +1,4 @@
-type BaseHookContext = {
+type BaseHookContext = Record<string, unknown> & {
   sessionKey?: string;
   agentId?: string;
 };

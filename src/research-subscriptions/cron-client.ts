@@ -1,4 +1,4 @@
-import type { RunCommandResult } from "openclaw";
+import type { RunCommandResult } from "../types.js";
 import type { CronCommandDeps, CronJob, CronListResult } from "./types.js";
 
 export async function runCommand(

@@ -1,4 +1,4 @@
-import type { PluginLogger, PluginRuntime } from "openclaw";
+import type { PluginLogger, PluginRuntime } from "../types.js";
 
 export type ScheduleSpec =
   | {

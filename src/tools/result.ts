@@ -1,16 +1,14 @@
 /**
- * Tool result helpers for pi-ai compatibility.
+ * Tool result helpers compatible with AgentToolResult<T>.
  *
- * pi-ai expects tool results in format:
- * { type: "tool_result", content: [{ type: "text", text: string }] }
+ * AgentToolResult requires: { content: [{type:"text", text}], details: T }
  */
 
 type ToolResultContent = { type: "text"; text: string };
 
 type ToolResult = {
-  type: "tool_result";
   content: ToolResultContent[];
-  isError?: boolean;
+  details: unknown;
 };
 
 /**
@@ -18,8 +16,8 @@ type ToolResult = {
  */
 export function ok<T extends Record<string, unknown>>(data: T): ToolResult {
   return {
-    type: "tool_result",
     content: [{ type: "text", text: JSON.stringify(data) }],
+    details: data,
   };
 }
 
@@ -28,9 +26,8 @@ export function ok<T extends Record<string, unknown>>(data: T): ToolResult {
  */
 export function err(code: string, message: string): ToolResult {
   return {
-    type: "tool_result",
     content: [{ type: "text", text: JSON.stringify({ error: code, message }) }],
-    isError: true,
+    details: { error: code, message },
   };
 }
 
@@ -39,8 +36,8 @@ export function err(code: string, message: string): ToolResult {
  */
 export function text(content: string): ToolResult {
   return {
-    type: "tool_result",
     content: [{ type: "text", text: content }],
+    details: null,
   };
 }
 

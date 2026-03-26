@@ -291,7 +291,7 @@ function deleteProject(id: string): void {
  * Register the `openclaw research` CLI command.
  */
 export function registerResearchCli(
-  api: { registerCli: (registrar: unknown, opts?: { commands?: string[] }) => void; source: string },
+  api: Pick<import("../types.js").OpenClawPluginApi, "registerCli" | "source">,
 ) {
   const entryDir = path.dirname(api.source);
 

@@ -6,19 +6,19 @@ import path from "node:path";
  *
  * When a cron job fires with a heartbeat message starting with `/skill-name`,
  * this hook reads the matching SKILL.md from the agent's workspace and
- * prepends its body to the message, so the agent receives full workflow
+ * prepends its body via prependContext, so the agent receives full workflow
  * instructions in the isolated cron session.
  */
 export function createCronSkillInjectionHook() {
   return async (
-    event: { payload?: { message?: string }; [key: string]: unknown },
-    ctx: { sessionType?: string; agentWorkspace?: string; [key: string]: unknown },
-  ): Promise<{ payload: Record<string, unknown> } | void> => {
+    event: { prompt?: string; messages?: unknown[]; [key: string]: unknown },
+    ctx: { trigger?: string; workspaceDir?: string; [key: string]: unknown },
+  ): Promise<{ prependContext: string } | void> => {
     // Only process cron sessions
-    if (ctx.sessionType !== "cron") return;
+    if (ctx.trigger !== "cron") return;
 
-    const message = event.payload?.message;
-    if (typeof message !== "string") return;
+    const message = typeof event.prompt === "string" ? event.prompt : "";
+    if (!message) return;
 
     // Extract /skill-name from the first line
     const match = message.match(/^\/([a-z][\w-]*)/);
@@ -26,7 +26,7 @@ export function createCronSkillInjectionHook() {
     const skillName = match[1];
 
     // Resolve agent workspace
-    const workspace = ctx.agentWorkspace;
+    const workspace = ctx.workspaceDir;
     if (typeof workspace !== "string") return;
 
     const skillPath = path.join(workspace, "skills", skillName, "SKILL.md");
@@ -43,17 +43,6 @@ export function createCronSkillInjectionHook() {
     const body = content.replace(/^---[\s\S]*?---\s*/, "").trim();
     if (!body) return;
 
-    // Inject skill body after the first line (/skill-name), before the rest
-    const firstNewline = message.indexOf("\n");
-    const newMessage =
-      firstNewline === -1
-        ? message + "\n\n" + body
-        : message.slice(0, firstNewline) +
-          "\n\n" +
-          body +
-          "\n\n" +
-          message.slice(firstNewline + 1);
-
-    return { payload: { ...event.payload, message: newMessage } };
+    return { prependContext: body };
   };
 }

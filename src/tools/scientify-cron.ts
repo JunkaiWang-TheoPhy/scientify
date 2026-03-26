@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { PluginCommandContext, PluginCommandResult, PluginLogger, PluginRuntime } from "openclaw";
+import type { PluginCommandContext, PluginCommandResult, PluginLogger, PluginRuntime } from "../types.js";
 import { normalizeDeliveryChannelOverride } from "../research-subscriptions/delivery.js";
 import {
   createResearchSubscribeHandler,
@@ -163,16 +163,20 @@ function buildToolContext(scope: string, args: string, commandBody: string): Plu
     isAuthorizedSender: true,
     args,
     commandBody,
-    config: {},
+    config: {} as PluginCommandContext["config"],
+    requestConversationBinding: async () => ({ status: "error" as const, message: "not available in tool context" }),
+    detachConversationBinding: async () => ({ removed: false }),
+    getCurrentConversationBinding: async () => null,
   };
 }
 
 function getResultText(result: PluginCommandResult): string {
-  return result.text ?? result.error ?? "";
+  return result.text ?? "";
 }
 
 function getResultError(result: PluginCommandResult): string | undefined {
-  const maybe = result.error?.trim();
+  if (!result.isError) return undefined;
+  const maybe = result.text?.trim();
   return maybe && maybe.length > 0 ? maybe : undefined;
 }
 

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import type { PluginCommandContext, PluginCommandResult } from "openclaw";
+import type { PluginCommandContext, PluginCommandResult } from "./types.js";
 
 const WORKSPACE_ROOT = path.join(os.homedir(), ".openclaw", "workspace", "projects");
 

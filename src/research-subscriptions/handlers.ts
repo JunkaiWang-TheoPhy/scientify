@@ -1,4 +1,4 @@
-import type { PluginCommandContext, PluginCommandResult } from "openclaw";
+import type { PluginCommandContext, PluginCommandResult } from "../types.js";
 import { buildScopedJobName, buildStateScopeKey, resolveDeliveryTarget } from "./delivery.js";
 import { ensureJobEnabled, listAllJobs, parseJsonFromOutput, runCommand, scheduleText } from "./cron-client.js";
 import { isDurationLike, parseScheduleArgs, parseSubscribeOptions } from "./parse.js";
@@ -10,7 +10,7 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
     const options = parseSubscribeOptions(ctx.args);
     if ("error" in options) {
       return {
-        error: options.error,
+        isError: true,
         text: `${options.error}\n\n${formatUsage()}`,
       };
     }
@@ -18,7 +18,7 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
     const parsed = parseScheduleArgs(options.scheduleTokens);
     if ("error" in parsed) {
       return {
-        error: parsed.error,
+        isError: true,
         text: `${parsed.error}\n\n${formatUsage()}`,
       };
     }
@@ -26,11 +26,11 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
     if (parsed.kind === "at" && !isDurationLike(parsed.when)) {
       const atMs = Date.parse(parsed.when);
       if (!Number.isNaN(atMs) && atMs <= Date.now()) {
-        const error =
+        const errorMsg =
           "Error: `at` time is in the past. Use a future ISO datetime (for example `2026-03-04T08:00:00+08:00`) or a relative duration like `at 5m`.";
         return {
-          error,
-          text: `${error}\n\n${formatUsage()}`,
+          isError: true,
+          text: `${errorMsg}\n\n${formatUsage()}`,
         };
       }
     }
@@ -39,7 +39,7 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
     const delivery = resolveDeliveryTarget(ctx, options);
     if ("error" in delivery) {
       return {
-        error: delivery.error,
+        isError: true,
         text: `${delivery.error}\n\n${formatUsage()}`,
       };
     }
@@ -143,7 +143,7 @@ export function createResearchSubscribeHandler(deps: CronCommandDeps) {
         `[scientify-cron] subscribe failed: ${error instanceof Error ? error.message : String(error)}`,
       );
       return {
-        error: message,
+        isError: true,
         text: message,
       };
     }
@@ -188,7 +188,7 @@ export function createResearchUnsubscribeHandler(deps: CronCommandDeps) {
       );
       const message = `Error: failed to cancel subscription: ${error instanceof Error ? error.message : String(error)}`;
       return {
-        error: message,
+        isError: true,
         text: message,
       };
     }
@@ -224,7 +224,7 @@ export function createResearchSubscriptionsHandler(deps: CronCommandDeps) {
       );
       const message = `Error: failed to list scheduled jobs: ${error instanceof Error ? error.message : String(error)}`;
       return {
-        error: message,
+        isError: true,
         text: message,
       };
     }

@@ -1,3 +1,9 @@
+## [2.1.0](https://github.com/tsingyuai/scientify/compare/v2.0.0...v2.1.0) (2026-03-30)
+
+### Features
+
+* add beta sign-up section to README and include entry image ([61d5f11](https://github.com/tsingyuai/scientify/commit/61d5f11c1e3b1b1b06676d8890af26f4847f4ed2))
+
 ## [2.0.0](https://github.com/tsingyuai/scientify/compare/v1.12.0...v2.0.0) (2026-03-26)
 
 ### ⚠ BREAKING CHANGES

@@ -1,3 +1,16 @@
+## [3.0.0](https://github.com/tsingyuai/scientify/compare/v2.1.0...v3.0.0) (2026-03-30)
+
+### ⚠ BREAKING CHANGES
+
+* requires openclaw >= 2026.3.24, workspace structure changed
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+### Refactoring
+
+* simplify architecture — remove 8500 lines of prompt-assembly code ([a2cc783](https://github.com/tsingyuai/scientify/commit/a2cc7835fb9b8fad3c138966f122055c3cfaaf5b))
+* unify skills — flatten workspace, merge metabolism-init, add paper-download ([78ae944](https://github.com/tsingyuai/scientify/commit/78ae944cb77a4d655b0bf66814654183df34ffcf))
+
 ## [2.1.0](https://github.com/tsingyuai/scientify/compare/v2.0.0...v2.1.0) (2026-03-30)
 
 ### Features

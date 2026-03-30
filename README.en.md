@@ -341,6 +341,27 @@ See [CLAUDE.md](./CLAUDE.md) for version update SOP and contribution guide.
 
 ---
 
+## Beta Sign-Up
+
+Scientify is currently in closed beta, open to individuals and teams with real research needs.
+
+After signing up, we will provide:
+
+1. Detailed onboarding guidance to get you started quickly
+2. An assessment of your research domain and the feasibility of end-to-end AI-driven research
+3. Personalized recommendations based on your research workflow
+4. Rapid development of new features tailored to your needs
+
+<p align="center">
+  <a href="https://tsingyuai.feishu.cn/share/base/form/shrcne78pTl0NJ9gQqVPDvWm7Wb">
+    <img src="docs/assets/showcase/entry.png" width="200" alt="Scan to sign up for beta">
+  </a>
+  <br>
+  <sub><a href="https://tsingyuai.feishu.cn/share/base/form/shrcne78pTl0NJ9gQqVPDvWm7Wb">Sign Up for Beta</a></sub>
+</p>
+
+---
+
 ## License
 
 MIT

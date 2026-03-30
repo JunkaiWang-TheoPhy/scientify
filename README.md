@@ -277,6 +277,27 @@ openclaw plugins install -l ./
 
 ---
 
+## 内测报名
+
+Scientify 目前处于内测阶段，面向有真实研究需求的个人和团队开放。
+
+报名后，我们会为你提供：
+
+1. 详细的使用指导，帮助你快速上手
+2. 评估你的研究领域，分析 Scientify 执行端到端研究的可行性
+3. 根据你的研究特点推荐最适合的使用方法
+4. 根据你的需求快速开发新功能
+
+<p align="center">
+  <a href="https://tsingyuai.feishu.cn/share/base/form/shrcne78pTl0NJ9gQqVPDvWm7Wb">
+    <img src="docs/assets/showcase/entry.png" width="200" alt="扫码报名内测">
+  </a>
+  <br>
+  <sub><a href="https://tsingyuai.feishu.cn/share/base/form/shrcne78pTl0NJ9gQqVPDvWm7Wb">扫描二维码，或者点我立即报名内测</a></sub>
+</p>
+
+---
+
 ## License
 
 MIT

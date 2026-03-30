@@ -26,7 +26,7 @@ $W/
 ├── papers/
 │   ├── _downloads/            # 原始下载
 │   ├── _meta/                 # 每篇论文的元数据
-│   │   └── {arxiv_id}.json
+│   │   └── {paper_id}.json
 │   └── {direction}/           # 整理后的分类
 ├── repos/                     # 参考代码仓库（Phase 3）
 │   ├── {repo_name_1}/
@@ -58,37 +58,63 @@ mkdir -p "$W/survey" "$W/papers/_downloads" "$W/papers/_meta"
 
 ```
 arxiv_search({ query: "<term>", max_results: 30 })
+openalex_search({ query: "<term>", max_results: 20 })
 ```
 
-#### 2.2 即时筛选
+合并两个来源的结果，按 arXiv ID / DOI 去重。
 
-对返回的论文**立即**评分（1-5），只保留 ≥4 分的。
+#### 2.2 筛选
 
-评分标准：
-- 5分：核心论文，直接研究该主题
-- 4分：相关方法或应用
-- 3分及以下：跳过
+只看**相关性**——这篇论文是否和研究主题直接相关？
 
-#### 2.3 下载有用论文
+- **相关**：直接研究该主题，或提出了可借鉴的方法 → 保留
+- **不相关**：主题偏离，仅在关键词上有交集 → 跳过
 
+#### 2.3 下载论文
+
+**arXiv 论文**：
+
+```bash
+# 下载源文件（.tex）
+mkdir -p "$W/papers/_downloads/{arxiv_id}"
+curl -L "https://arxiv.org/src/{arxiv_id}" | tar -xz -C "$W/papers/_downloads/{arxiv_id}"
+
+# 如果 tar 解压失败（可能是 PDF），直接下载 PDF
+curl -L -o "$W/papers/_downloads/{arxiv_id}.pdf" "https://arxiv.org/pdf/{arxiv_id}"
 ```
-arxiv_download({
-  arxiv_ids: ["<有用的论文ID>"],
-  output_dir: "papers/_downloads"
-})
+
+**DOI 论文（通过 Unpaywall 获取开放获取 PDF）**：
+
+```bash
+# 查询 Unpaywall 获取 OA 下载链接
+curl -s "https://api.unpaywall.org/v2/{doi}?email=research@openclaw.ai" | \
+  python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+oa = d.get('best_oa_location') or {}
+url = oa.get('url_for_pdf') or oa.get('url')
+if url: print(url)
+else: print('NO_OA', file=sys.stderr)
+"
+
+# 如果有 OA 链接，下载 PDF
+curl -L -o "$W/papers/_downloads/{doi_slug}.pdf" "{oa_url}"
 ```
+
+> 注意：非开放获取论文会静默跳过，不报错。
 
 #### 2.4 写入元数据
 
-为每篇下载的论文创建元数据文件 `$W/papers/_meta/{arxiv_id}.json`：
+为每篇下载的论文创建元数据文件 `$W/papers/_meta/{paper_id}.json`：
 
 ```json
 {
-  "arxiv_id": "2401.12345",
+  "id": "2401.12345",
   "title": "...",
   "abstract": "...",
-  "score": 5,
+  "source": "arxiv",
   "source_term": "battery RUL prediction",
+  "doi": null,
   "downloaded_at": "2024-01-15T10:00:00Z"
 }
 ```
@@ -101,9 +127,9 @@ arxiv_download({
 
 **目标**：为下游 skill（research-survey、research-plan、research-implement）提供可参考的开源实现。
 
-#### 3.1 选择高分论文
+#### 3.1 选择论文
 
-读取 `$W/papers/_meta/` 下得分 ≥4 的论文，选出 **Top 5** 最相关论文。
+读取 `$W/papers/_meta/` 下的论文，选出 **Top 5** 最相关论文。
 
 #### 3.2 搜索参考仓库
 
@@ -112,14 +138,8 @@ arxiv_download({
 - 核心方法名 + 作者名
 - 论文中提到的数据集名 + 任务名
 
-使用 `github_search` 工具：
-```javascript
-github_search({
-  query: "{paper_title} implementation",
-  max_results: 10,
-  sort: "stars",
-  language: "python"
-})
+```bash
+gh search repos "{paper_title} implementation" --limit 10 --sort stars --language python
 ```
 
 #### 3.3 筛选与 clone
@@ -205,10 +225,13 @@ mv "$W/papers/_downloads/2401.12345" "$W/papers/data-driven/"
 | **元数据驱动** | 分类基于 `_meta/*.json`，不依赖内存中的大列表 |
 | **文件夹即分类** | 聚类结果通过 `papers/{direction}/` 体现，无需额外 JSON |
 
-## Tools
+## Tools / Commands
 
-| Tool | Purpose |
-|------|---------|
-| `arxiv_search` | 搜索论文（无副作用） |
-| `arxiv_download` | 下载 .tex/.pdf（需绝对路径） |
-| `github_search` | 搜索参考仓库 |
+| Tool / Command | Purpose |
+|----------------|---------|
+| `arxiv_search` | 搜索 arXiv 论文 |
+| `openalex_search` | 搜索跨学科论文（覆盖更广） |
+| `curl -L "https://arxiv.org/src/{id}" \| tar -xz` | 下载 arXiv 论文源文件 |
+| `curl -L -o paper.pdf "https://arxiv.org/pdf/{id}"` | 下载 arXiv PDF |
+| `curl -s "https://api.unpaywall.org/v2/{doi}?email=..."` | 查询 DOI 论文的开放获取链接 |
+| `gh search repos "query"` | 搜索 GitHub 仓库 |

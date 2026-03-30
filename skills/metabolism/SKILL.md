@@ -8,12 +8,12 @@ user-invokable: true
 
 你正在执行知识新陈代谢循环。严格按以下步骤执行。
 
-**前提：** `metabolism/config.json` 必须已存在且 `currentDay >= 1`。如果不存在或 `currentDay` 为 0，提示用户先执行 /metabolism-init 完成初始化。
+**前提：** `config.json` 必须已存在且 `currentDay >= 1`。如果不存在或 `currentDay` 为 0，提示用户先执行 /metabolism-init 完成初始化。
 
 ## 准备
 
-1. 读取 `metabolism/config.json` 获取关键词、arXiv 分类、`processed_ids` 和 `currentDay`
-2. 读取 `metabolism/knowledge/_index.md` 获取当前知识状态
+1. 读取 `config.json` 获取关键词、arXiv 分类、`processed_ids` 和 `currentDay`
+2. 读取 `knowledge/_index.md` 获取当前知识状态
 
 ## Step 1: Search（增量搜索）
 
@@ -39,9 +39,21 @@ openalex_search({
 
 下载新论文：
 
-```
-arxiv_download({ arxiv_ids: ["{id1}", "{id2}", ...] })
-unpaywall_download({ dois: ["{doi1}", "{doi2}", ...] })
+```bash
+# arXiv 论文：下载源文件
+mkdir -p papers/{arxiv_id}
+curl -L "https://arxiv.org/src/{arxiv_id}" | tar -xz -C papers/{arxiv_id}
+
+# DOI 论文：通过 Unpaywall 获取开放获取 PDF
+curl -s "https://api.unpaywall.org/v2/{doi}?email=research@openclaw.ai" | \
+  python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+oa = d.get('best_oa_location') or {}
+url = oa.get('url_for_pdf') or oa.get('url')
+if url: print(url)
+else: print('NO_OA', file=sys.stderr)
+" | xargs -I{} curl -L -o papers/{doi_slug}.pdf "{}"
 ```
 
 ## Step 2: Read（阅读）
@@ -54,7 +66,7 @@ unpaywall_download({ dois: ["{doi1}", "{doi2}", ...] })
 
 ## Step 3: Update Knowledge
 
-读取当前 `metabolism/knowledge/_index.md` 和相关 `topic-*.md`，根据今日阅读的论文更新。
+读取当前 `knowledge/_index.md` 和相关 `topic-*.md`，根据今日阅读的论文更新。
 
 **更新原则：**
 - 新发现 → 添加到相关章节
@@ -66,13 +78,13 @@ unpaywall_download({ dois: ["{doi1}", "{doi2}", ...] })
 
 ## Step 4: Hypothesize（假设）
 
-更新完 knowledge.md 后，回顾今日新增内容，自问：
+更新完知识后，回顾今日新增内容，自问：
 
 - 有没有反复出现但尚未被验证的模式？
 - 有没有两个独立发现组合后暗示的新方向？
 - 有没有现有方法的明显空白？
 
-**有想法** → 写入 `metabolism/hypotheses/hyp-{NNN}.md`：
+**有想法** → 写入 `ideas/hyp-{NNN}.md`：
 
 ```markdown
 # Hypothesis {NNN}
@@ -94,13 +106,13 @@ unpaywall_download({ dois: ["{doi1}", "{doi2}", ...] })
 
 然后用 `sessions_send` 通知 main session。
 
-**说明：** 发送给用户的内容不要输出“触发条件检查表/列表”，只需解释为什么这个假设合理、哪些已读内容启发了它。
+**说明：** 发送给用户的内容不要输出"触发条件检查表/列表"，只需解释为什么这个假设合理、哪些已读内容启发了它。
 
 **没有想法** → 跳过，不要硬凑。
 
 ## Step 5: Log & Finish
 
-写入 `metabolism/log/{YYYY-MM-DD}.md`：
+写入 `log/{YYYY-MM-DD}.md`：
 
 ```markdown
 # Day {currentDay} — {YYYY-MM-DD}

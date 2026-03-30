@@ -14,24 +14,15 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
-
 ## Output Structure
 
 ```
-$W/
-├── survey/
-│   ├── search_terms.json      # 检索词列表
-│   └── report.md              # 最终报告
 ├── papers/
-│   ├── _downloads/            # 原始下载
-│   ├── _meta/                 # 每篇论文的元数据
-│   │   └── {arxiv_id}.json
-│   └── {direction}/           # 整理后的分类
-├── repos/                     # 参考代码仓库（Phase 3）
-│   ├── {repo_name_1}/
-│   └── {repo_name_2}/
-└── prepare_res.md             # 仓库选择报告（Phase 3）
+│   ├── {arxiv_id}/             # arXiv 论文源文件
+│   ├── {doi_slug}.pdf          # DOI 论文 PDF
+│   └── {direction}/            # 整理后的分类目录
+├── repos/                      # 参考代码仓库（Phase 3）
+└── survey_report.md            # 调研报告
 ```
 
 ---
@@ -40,13 +31,11 @@ $W/
 
 ### Phase 1: 准备
 
-确保工作目录结构存在：
-
 ```bash
-mkdir -p "$W/survey" "$W/papers/_downloads" "$W/papers/_meta"
+mkdir -p "papers"
 ```
 
-生成 4-8 个检索词，保存到 `$W/survey/search_terms.json`。
+生成 4-8 个检索词。
 
 ---
 
@@ -58,40 +47,21 @@ mkdir -p "$W/survey" "$W/papers/_downloads" "$W/papers/_meta"
 
 ```
 arxiv_search({ query: "<term>", max_results: 30 })
+openalex_search({ query: "<term>", max_results: 20 })
 ```
 
-#### 2.2 即时筛选
+合并两个来源的结果，按 arXiv ID / DOI 去重。
 
-对返回的论文**立即**评分（1-5），只保留 ≥4 分的。
+#### 2.2 筛选
 
-评分标准：
-- 5分：核心论文，直接研究该主题
-- 4分：相关方法或应用
-- 3分及以下：跳过
+只看**相关性**——这篇论文是否和研究主题直接相关？
 
-#### 2.3 下载有用论文
+- **相关**：直接研究该主题，或提出了可借鉴的方法 → 保留
+- **不相关**：主题偏离，仅在关键词上有交集 → 跳过
 
-```
-arxiv_download({
-  arxiv_ids: ["<有用的论文ID>"],
-  output_dir: "papers/_downloads"
-})
-```
+#### 2.3 下载论文
 
-#### 2.4 写入元数据
-
-为每篇下载的论文创建元数据文件 `$W/papers/_meta/{arxiv_id}.json`：
-
-```json
-{
-  "arxiv_id": "2401.12345",
-  "title": "...",
-  "abstract": "...",
-  "score": 5,
-  "source_term": "battery RUL prediction",
-  "downloaded_at": "2024-01-15T10:00:00Z"
-}
-```
+按 /paper-download 的方式下载论文到 `papers/`。
 
 **完成一个检索词后，再进行下一个。** 这样避免上下文被大量搜索结果污染。
 
@@ -101,9 +71,9 @@ arxiv_download({
 
 **目标**：为下游 skill（research-survey、research-plan、research-implement）提供可参考的开源实现。
 
-#### 3.1 选择高分论文
+#### 3.1 选择论文
 
-读取 `$W/papers/_meta/` 下得分 ≥4 的论文，选出 **Top 5** 最相关论文。
+从 `papers/` 中选出 **Top 5** 最相关论文。
 
 #### 3.2 搜索参考仓库
 
@@ -112,87 +82,47 @@ arxiv_download({
 - 核心方法名 + 作者名
 - 论文中提到的数据集名 + 任务名
 
-使用 `github_search` 工具：
-```javascript
-github_search({
-  query: "{paper_title} implementation",
-  max_results: 10,
-  sort: "stars",
-  language: "python"
-})
+```bash
+gh search repos "{paper_title} implementation" --limit 10 --sort stars --language python
 ```
 
 #### 3.3 筛选与 clone
 
-对搜索到的仓库，评估：
-- Star 数（建议 >100）
-- 代码质量（有 README、有 requirements.txt、代码结构清晰）
-- 与论文的匹配度
-
-选择 **3-5 个**最相关的仓库，clone 到 `$W/repos/`：
+选择 **3-5 个**最相关的仓库：
 
 ```bash
-mkdir -p "$W/repos"
-cd "$W/repos"
-git clone --depth 1 <repo_url>
+mkdir -p "repos"
+git clone --depth 1 <repo_url> "repos/{name}"
 ```
 
-#### 3.4 写入选择报告
-
-创建 `$W/prepare_res.md`：
-
-```markdown
-# 参考仓库选择
-
-| 仓库 | 对应论文 | Stars | 选择理由 |
-|------|----------|-------|----------|
-| repos/{repo_name} | {paper_title} (arxiv:{id}) | {N} | {理由} |
-
-## 各仓库关键文件
-
-### {repo_name}
-- **模型实现**: `model/` 或 `models/`
-- **训练脚本**: `train.py` 或 `main.py`
-- **数据加载**: `data/` 或 `dataset.py`
-- **核心文件**: `{关键文件路径}` — {描述}
-```
-
-**如果搜不到相关仓库**，在 `prepare_res.md` 中注明"无可用参考仓库"，后续 skill 将不依赖代码映射。
+**如果搜不到相关仓库**，跳过本阶段。
 
 ---
 
 ### Phase 4: 分类整理
 
-所有检索词和代码搜索完毕后：
+所有检索词完毕后：
 
-#### 4.1 读取所有元数据
+#### 4.1 聚类分析
 
-```bash
-ls $W/papers/_meta/
-```
+根据已下载论文的标题和摘要，识别 3-6 个研究方向。
 
-读取所有 `.json` 文件，汇总论文列表。
-
-#### 4.2 聚类分析
-
-根据论文的标题、摘要、来源检索词，识别 3-6 个研究方向。
-
-#### 4.3 创建文件夹并移动
+#### 4.2 创建分类目录
 
 ```bash
-mkdir -p "$W/papers/data-driven"
-mv "$W/papers/_downloads/2401.12345" "$W/papers/data-driven/"
+mkdir -p "papers/{direction}"
+mv "papers/2401.12345" "papers/data-driven/"
 ```
 
 ---
 
 ### Phase 5: 生成报告
 
-创建 `$W/survey/report.md`：
+创建 `survey_report.md`：
 - 调研概要（检索词数、论文数、方向数）
 - 各研究方向概述
-- Top 10 论文
-- **参考仓库摘要**（引用 prepare_res.md）
+- Top 10 论文（标题 + ID + 一句话价值）
+- 参考仓库摘要（如有）
 - 建议阅读顺序
 
 ---
@@ -201,14 +131,14 @@ mv "$W/papers/_downloads/2401.12345" "$W/papers/data-driven/"
 
 | 原则 | 说明 |
 |------|------|
-| **增量处理** | 每个检索词独立完成搜索→筛选→下载→写元数据，避免上下文膨胀 |
-| **元数据驱动** | 分类基于 `_meta/*.json`，不依赖内存中的大列表 |
-| **文件夹即分类** | 聚类结果通过 `papers/{direction}/` 体现，无需额外 JSON |
+| **增量处理** | 每个检索词独立完成搜索→筛选→下载，避免上下文膨胀 |
+| **文件夹即分类** | 聚类结果通过 `papers/{direction}/` 体现 |
 
-## Tools
+## Tools / Commands
 
-| Tool | Purpose |
-|------|---------|
-| `arxiv_search` | 搜索论文（无副作用） |
-| `arxiv_download` | 下载 .tex/.pdf（需绝对路径） |
-| `github_search` | 搜索参考仓库 |
+| Tool / Command | Purpose |
+|----------------|---------|
+| `arxiv_search` | 搜索 arXiv 论文 |
+| `openalex_search` | 搜索跨学科论文（覆盖更广） |
+| /paper-download | 下载论文（arXiv .tex/PDF、DOI via Unpaywall） |
+| `gh search repos "query"` | 搜索 GitHub 仓库 |

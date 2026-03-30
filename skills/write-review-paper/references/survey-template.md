@@ -1,6 +1,6 @@
 # Survey Paper Template
 
-Use this template for `$WORKSPACE/review/draft.md`:
+Use this template for `review/draft.md`:
 
 ```markdown
 # [Survey Title]: A Comprehensive Review

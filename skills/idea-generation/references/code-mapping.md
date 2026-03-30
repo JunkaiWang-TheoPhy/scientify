@@ -9,13 +9,13 @@ From `selected_idea.md`, list concepts needing implementation.
 ## Step 2: Survey Codebases
 
 ```bash
-grep -r "class.*Attention" $WORKSPACE/repos/
-grep -r "def forward" $WORKSPACE/repos/
+grep -r "class.*Attention" repos/
+grep -r "def forward" repos/
 ```
 
 ## Step 3: Implementation Report
 
-Write to `$WORKSPACE/ideas/implementation_report.md`:
+Write to `ideas/implementation_report.md`:
 
 ```markdown
 # Implementation Report

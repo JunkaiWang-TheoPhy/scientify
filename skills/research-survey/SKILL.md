@@ -14,29 +14,22 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
-
 ## Prerequisites
 
 Read and verify these files exist before starting:
 
 | File | Source |
 |------|--------|
-| `$W/papers/_meta/*.json` | /research-collect |
-| `$W/papers/_downloads/` or `$W/papers/{direction}/` | /research-collect |
-| `$W/repos/` | /research-collect Phase 3 |
-| `$W/prepare_res.md` | /research-collect Phase 3 |
+| `papers/` | /research-collect 或 /metabolism |
 
 **If papers are missing, STOP:** "需要先运行 /research-collect 完成论文下载"
-
-**Note:** 如果 `prepare_res.md` 中注明"无可用参考仓库"，代码映射步骤可跳过，但需在 survey_res.md 中标注。
 
 ## Output
 
 | File | Content |
 |------|---------|
-| `$W/notes/paper_{arxiv_id}.md` | Per-paper structured notes |
-| `$W/survey_res.md` | Synthesis report |
+| `knowledge/paper_{id}.md` | Per-paper structured notes |
+| `survey_res.md` | Synthesis report |
 
 ---
 
@@ -45,30 +38,23 @@ Read and verify these files exist before starting:
 ### Step 1: 收集论文列表
 
 ```bash
-ls $W/papers/_meta/
+ls papers/
 ```
 
-读取所有 `.json` 元数据，构建论文列表。按 score 降序排列。
+列出所有论文目录（arXiv 源文件）和 PDF 文件。
 
 ### Step 2: 逐篇深度分析
 
-**对每篇论文**（优先高分论文）：
+**对每篇论文：**
 
 #### 2.1 读 .tex 源码
 
-找到论文的 .tex 文件（在 `_downloads/{arxiv_id}/` 或 `{direction}/{arxiv_id}/` 下），重点读取：
+找到论文的 .tex 文件（在 `papers/{arxiv_id}/` 下），重点读取：
 - **Method / Approach** section
 - **Model Architecture** section
 - 数学公式定义
 
-**对于大型论文**（>2000 行），使用 `paper_browser` 分页阅读：
-```javascript
-// 先读前 100 行找到 section 位置
-paper_browser({ file_path: "$W/papers/{arxiv_id}/{file}.tex", start_line: 1, num_lines: 100 })
-
-// 找到 Method section 后，跳转到该位置
-paper_browser({ file_path: "$W/papers/{arxiv_id}/{file}.tex", start_line: 450, num_lines: 150 })
-```
+**对于大型论文**（>2000 行），分段读取关键 section，避免上下文溢出。
 
 如果没有 .tex（只有 PDF），基于 abstract 分析。
 
@@ -83,14 +69,14 @@ paper_browser({ file_path: "$W/papers/{arxiv_id}/{file}.tex", start_line: 450, n
 
 **⚠️ 强制性步骤（当 repos/ 存在时）** — 代码映射是下游 plan 和 implement 的关键输入。
 
-读取 `$W/prepare_res.md` 中的仓库列表，对每个公式/核心概念：
+读取 `prepare_res.md` 中的仓库列表，对每个公式/核心概念：
 1. 在对应仓库中搜索实现代码（用 grep 关键类名/函数名）
 2. 记录**文件路径、行号、代码片段**
 3. 如果多个仓库有不同实现，记录差异
 
 #### 2.4 写入笔记
 
-写入 `$W/notes/paper_{arxiv_id}.md`：
+写入 `knowledge/paper_{id}.md`：
 
 ```markdown
 # {Paper Title}
@@ -120,7 +106,7 @@ $$
 
 ### Step 3: 综合报告
 
-读取所有 `notes/paper_*.md`，写入 `$W/survey_res.md`：
+读取所有 `knowledge/paper_*.md`，写入 `survey_res.md`：
 
 ```markdown
 # Survey Synthesis

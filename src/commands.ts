@@ -3,266 +3,128 @@ import * as path from "node:path";
 import * as os from "node:os";
 import type { PluginCommandContext, PluginCommandResult } from "./types.js";
 
-const WORKSPACE_ROOT = path.join(os.homedir(), ".openclaw", "workspace", "projects");
+const OPENCLAW_HOME = path.join(os.homedir(), ".openclaw");
 
-interface ProjectMeta {
+interface ResearchAgent {
   id: string;
-  name: string;
-  created: string;
-  topics?: string[];
+  workspace: string;
 }
 
-function getActiveProject(): string | null {
-  const activePath = path.join(WORKSPACE_ROOT, ".active");
+/**
+ * List all research agents from openclaw.json.
+ */
+function listResearchAgents(): ResearchAgent[] {
+  const configPath = path.join(OPENCLAW_HOME, "openclaw.json");
   try {
-    return fs.readFileSync(activePath, "utf-8").trim();
-  } catch {
-    return null;
-  }
-}
-
-function getProjectMeta(projectId: string): ProjectMeta | null {
-  const metaPath = path.join(WORKSPACE_ROOT, projectId, "project.json");
-  try {
-    return JSON.parse(fs.readFileSync(metaPath, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-
-function listProjects(): string[] {
-  try {
-    return fs
-      .readdirSync(WORKSPACE_ROOT, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith("."))
-      .map((d) => d.name);
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    const agents = (config.agents as { list?: Array<{ id: string; workspace?: string }> })?.list ?? [];
+    return agents
+      .filter((a) => a.id.startsWith("research-"))
+      .map((a) => ({
+        id: a.id,
+        workspace: (a.workspace ?? `~/.openclaw/workspace-${a.id}`).replace("~", os.homedir()),
+      }));
   } catch {
     return [];
   }
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
-
-function getDirSize(dirPath: string): number {
-  let size = 0;
+function countFiles(dirPath: string, filter?: (name: string) => boolean): number {
   try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
-      if (entry.isDirectory()) {
-        size += getDirSize(fullPath);
-      } else {
-        size += fs.statSync(fullPath).size;
-      }
-    }
+    const entries = fs.readdirSync(dirPath);
+    return filter ? entries.filter(filter).length : entries.length;
   } catch {
-    // ignore
-  }
-  return size;
-}
-
-function countFiles(dirPath: string, pattern?: RegExp): number {
-  let count = 0;
-  try {
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
-      if (entry.isDirectory()) {
-        count += countFiles(fullPath, pattern);
-      } else if (!pattern || pattern.test(entry.name)) {
-        count++;
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return count;
-}
-
-function getKnowledgeStateSummary(projectId: string): {
-  totalRuns: number;
-  totalHypotheses: number;
-  totalPaperNotes: number;
-  recentFullTextReadCount: number;
-  recentNotFullTextReadCount: number;
-  lastRunAtMs?: number;
-  lastStatus?: string;
-  streamCount: number;
-} | null {
-  const file = path.join(WORKSPACE_ROOT, projectId, "knowledge_state", "state.json");
-  if (!fs.existsSync(file)) return null;
-  try {
-    const raw = fs.readFileSync(file, "utf-8");
-    const parsed = JSON.parse(raw) as {
-      streams?: Record<
-        string,
-        {
-          totalRuns?: number;
-          totalHypotheses?: number;
-          paperNotes?: string[];
-          recentFullTextReadCount?: number;
-          recentNotFullTextReadCount?: number;
-          lastRunAtMs?: number;
-          lastStatus?: string;
-        }
-      >;
-    };
-    const streams = parsed.streams ?? {};
-    const streamEntries = Object.values(streams);
-    let totalRuns = 0;
-    let totalHypotheses = 0;
-    let totalPaperNotes = 0;
-    let recentFullTextReadCount = 0;
-    let recentNotFullTextReadCount = 0;
-    let lastRunAtMs = 0;
-    let lastStatus: string | undefined;
-    for (const stream of streamEntries) {
-      totalRuns += Number.isFinite(stream.totalRuns) ? Math.max(0, Math.floor(stream.totalRuns!)) : 0;
-      totalHypotheses += Number.isFinite(stream.totalHypotheses)
-        ? Math.max(0, Math.floor(stream.totalHypotheses!))
-        : 0;
-      totalPaperNotes += Array.isArray(stream.paperNotes) ? stream.paperNotes.length : 0;
-      recentFullTextReadCount += Number.isFinite(stream.recentFullTextReadCount)
-        ? Math.max(0, Math.floor(stream.recentFullTextReadCount!))
-        : 0;
-      recentNotFullTextReadCount += Number.isFinite(stream.recentNotFullTextReadCount)
-        ? Math.max(0, Math.floor(stream.recentNotFullTextReadCount!))
-        : 0;
-      const runAt = Number.isFinite(stream.lastRunAtMs) ? Math.floor(stream.lastRunAtMs!) : 0;
-      if (runAt >= lastRunAtMs) {
-        lastRunAtMs = runAt;
-        lastStatus = stream.lastStatus;
-      }
-    }
-    return {
-      totalRuns,
-      totalHypotheses,
-      totalPaperNotes,
-      recentFullTextReadCount,
-      recentNotFullTextReadCount,
-      ...(lastRunAtMs > 0 ? { lastRunAtMs } : {}),
-      ...(lastStatus ? { lastStatus } : {}),
-      streamCount: streamEntries.length,
-    };
-  } catch {
-    return null;
+    return 0;
   }
 }
 
 /**
- * /research-status - Show workspace status
+ * /research-status - Show workspace status for all research agents
  */
 export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandResult {
-  const activeProject = getActiveProject();
-  const projects = listProjects();
+  const agents = listResearchAgents();
 
-  let output = "📁 **Research Workspace Status**\n\n";
-  output += `Root: \`${WORKSPACE_ROOT}\`\n`;
-  output += `Active: ${activeProject ? `**${activeProject}**` : "(none)"}\n\n`;
-
-  if (activeProject) {
-    const knowledgeSummary = getKnowledgeStateSummary(activeProject);
-    if (knowledgeSummary) {
-      output += "**Knowledge State (active project):**\n";
-      output += `- streams: ${knowledgeSummary.streamCount}\n`;
-      output += `- total runs: ${knowledgeSummary.totalRuns}\n`;
-      output += `- total hypotheses: ${knowledgeSummary.totalHypotheses}\n`;
-      output += `- total paper notes: ${knowledgeSummary.totalPaperNotes}\n`;
-      output += `- recent full-text-read papers: ${knowledgeSummary.recentFullTextReadCount}\n`;
-      output += `- recent not-full-text-read papers: ${knowledgeSummary.recentNotFullTextReadCount}\n`;
-      output += `- last status: ${knowledgeSummary.lastStatus ?? "(unknown)"}\n`;
-      output += `- last run: ${
-        knowledgeSummary.lastRunAtMs ? new Date(knowledgeSummary.lastRunAtMs).toISOString() : "(none)"
-      }\n\n`;
-    }
+  if (agents.length === 0) {
+    return { text: "No research projects found. Use `openclaw research init <id>` to create one." };
   }
 
-  if (projects.length === 0) {
-    output += "_No projects found. Use /idea-generation to create one._";
-  } else {
-    output += "**Projects:**\n";
-    for (const proj of projects) {
-      const isActive = proj === activeProject;
-      const papersCount = countFiles(path.join(WORKSPACE_ROOT, proj, "papers"));
-      const ideasCount = countFiles(path.join(WORKSPACE_ROOT, proj, "ideas"), /\.md$/);
-      let reposCount = 0;
-      try {
-        const reposDir = path.join(WORKSPACE_ROOT, proj, "repos");
-        if (fs.existsSync(reposDir)) {
-          reposCount = fs
-            .readdirSync(reposDir, { withFileTypes: true })
-            .filter((d) => d.isDirectory()).length;
-        }
-      } catch {
-        // ignore
-      }
+  let output = "**Research Projects**\n\n";
 
-      const marker = isActive ? "● " : "  ";
-      output += `${marker}\`${proj}\` (papers: ${papersCount}, ideas: ${ideasCount}, repos: ${reposCount})\n`;
-    }
+  for (const agent of agents) {
+    const projectId = agent.id.replace("research-", "");
+    const w = agent.workspace;
+
+    const papersCount = countFiles(path.join(w, "papers"), (f) => f.endsWith(".tex") || f.endsWith(".pdf"));
+    const ideasCount = countFiles(path.join(w, "ideas"), (f) => f.endsWith(".md"));
+    const topicCount = countFiles(path.join(w, "knowledge"), (f) => f.startsWith("topic-"));
+    const hypothesisCount = countFiles(path.join(w, "ideas"), (f) => f.startsWith("hyp-"));
+
+    let currentDay = 0;
+    try {
+      const config = JSON.parse(fs.readFileSync(path.join(w, "config.json"), "utf-8"));
+      currentDay = config.currentDay ?? 0;
+    } catch { /* not yet bootstrapped */ }
+
+    output += `**${projectId}** (Day ${currentDay})\n`;
+    output += `  Workspace: \`${w}\`\n`;
+    output += `  Topics: ${topicCount} | Hypotheses: ${hypothesisCount} | Papers: ${papersCount} | Ideas: ${ideasCount}\n\n`;
   }
 
   return { text: output };
 }
 
 /**
- * /papers - List downloaded papers
+ * /papers - List downloaded papers in a research agent workspace
  */
 export function handlePapers(ctx: PluginCommandContext): PluginCommandResult {
-  const projectId = ctx.args?.trim() || getActiveProject();
-  if (!projectId) {
-    return { text: "❌ No active project. Use: `/papers <project-id>`" };
+  const agent = resolveAgent(ctx.args?.trim());
+  if (!agent) {
+    return { text: "No research project found. Use `openclaw research init <id>` to create one." };
   }
 
-  const papersDir = path.join(WORKSPACE_ROOT, projectId, "papers");
+  const papersDir = path.join(agent.workspace, "papers");
   if (!fs.existsSync(papersDir)) {
-    return { text: `📄 **Papers in ${projectId}**\n\n_No papers directory found._` };
+    return { text: `No papers directory in project ${agent.id}.` };
   }
 
-  let output = `📄 **Papers in ${projectId}**\n\n`;
-  const entries = fs.readdirSync(papersDir, { withFileTypes: true });
+  const downloadsDir = path.join(papersDir, "_downloads");
+  let output = `**Papers — ${agent.id.replace("research-", "")}**\n\n`;
   let hasItems = false;
 
-  for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const paperDir = path.join(papersDir, entry.name);
-      const texFiles = fs.readdirSync(paperDir).filter((f) => f.endsWith(".tex"));
-      output += `  [tex] \`${entry.name}\` (${texFiles.length} files)\n`;
-      hasItems = true;
-    } else if (entry.name.endsWith(".pdf")) {
-      const size = formatSize(fs.statSync(path.join(papersDir, entry.name)).size);
-      output += `  [pdf] \`${entry.name.replace(".pdf", "")}\` (${size})\n`;
-      hasItems = true;
+  try {
+    const entries = fs.readdirSync(downloadsDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const texCount = fs.readdirSync(path.join(downloadsDir, entry.name)).filter((f) => f.endsWith(".tex")).length;
+        output += `  [tex] \`${entry.name}\` (${texCount} files)\n`;
+        hasItems = true;
+      } else if (entry.name.endsWith(".pdf")) {
+        output += `  [pdf] \`${entry.name.replace(".pdf", "")}\`\n`;
+        hasItems = true;
+      }
     }
-  }
+  } catch { /* empty */ }
 
-  if (!hasItems) {
-    output += "_No papers downloaded yet._";
-  }
-
+  if (!hasItems) output += "_No papers downloaded yet._";
   return { text: output };
 }
 
 /**
- * /ideas - List generated ideas
+ * /ideas - List generated ideas in a research agent workspace
  */
 export function handleIdeas(ctx: PluginCommandContext): PluginCommandResult {
-  const projectId = ctx.args?.trim() || getActiveProject();
-  if (!projectId) {
-    return { text: "❌ No active project. Use: `/ideas <project-id>`" };
+  const agent = resolveAgent(ctx.args?.trim());
+  if (!agent) {
+    return { text: "No research project found. Use `openclaw research init <id>` to create one." };
   }
 
-  const ideasDir = path.join(WORKSPACE_ROOT, projectId, "ideas");
+  const ideasDir = path.join(agent.workspace, "ideas");
   if (!fs.existsSync(ideasDir)) {
-    return { text: `💡 **Ideas in ${projectId}**\n\n_No ideas directory found._` };
+    return { text: `No ideas in project ${agent.id.replace("research-", "")}.` };
   }
 
-  let output = `💡 **Ideas in ${projectId}**\n\n`;
   const files = fs.readdirSync(ideasDir).filter((f) => f.endsWith(".md"));
+  let output = `**Ideas — ${agent.id.replace("research-", "")}**\n\n`;
 
   if (files.length === 0) {
     output += "_No ideas generated yet._";
@@ -272,8 +134,8 @@ export function handleIdeas(ctx: PluginCommandContext): PluginCommandResult {
       const titleMatch = content.match(/^#\s+(.+)$/m);
       const title = titleMatch ? titleMatch[1] : file;
       const isSelected = file === "selected_idea.md";
-      const marker = isSelected ? "⭐ " : "   ";
-      output += `${marker}\`${file.padEnd(22)}\` ${title}\n`;
+      const marker = isSelected ? "* " : "  ";
+      output += `${marker}\`${file}\` ${title}\n`;
     }
   }
 
@@ -281,98 +143,38 @@ export function handleIdeas(ctx: PluginCommandContext): PluginCommandResult {
 }
 
 /**
- * /projects - List all research projects
+ * /projects - List all research projects (alias for /research-status)
  */
 export function handleProjects(_ctx: PluginCommandContext): PluginCommandResult {
-  const activeProject = getActiveProject();
-  const projects = listProjects();
-
-  let output = "📂 **Research Projects**\n\n";
-
-  if (projects.length === 0) {
-    output += "_No projects found._";
-  } else {
-    for (const proj of projects) {
-      const isActive = proj === activeProject;
-      const meta = getProjectMeta(proj);
-      const marker = isActive ? "● " : "  ";
-      output += `${marker}**${proj}**\n`;
-      if (meta?.name) output += `    name: ${meta.name}\n`;
-      if (meta?.created) output += `    created: ${meta.created}\n`;
-      if (meta?.topics?.length) output += `    topics: ${meta.topics.join(", ")}\n`;
-    }
-  }
-
-  return { text: output };
+  return handleResearchStatus(_ctx);
 }
 
 /**
- * /project-switch <project-id> - Switch to a different project
+ * /project-switch - No longer needed (each agent has its own workspace)
  */
-export function handleProjectSwitch(ctx: PluginCommandContext): PluginCommandResult {
-  const projectId = ctx.args?.trim();
-  if (!projectId) {
-    return { text: "❌ Usage: `/project-switch <project-id>`" };
-  }
-
-  const projectPath = path.join(WORKSPACE_ROOT, projectId);
-  if (!fs.existsSync(projectPath)) {
-    return { text: `❌ Project '${projectId}' not found.` };
-  }
-
-  fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
-  fs.writeFileSync(path.join(WORKSPACE_ROOT, ".active"), projectId);
-  return { text: `✓ Switched to project '**${projectId}**'` };
+export function handleProjectSwitch(_ctx: PluginCommandContext): PluginCommandResult {
+  return { text: "Project switching is no longer needed. Each research agent has its own workspace. Use `openclaw research list` to see all projects." };
 }
 
 /**
- * /project-delete <project-id> - Delete a research project
+ * /project-delete - Delete via CLI instead
  */
-export function handleProjectDelete(ctx: PluginCommandContext): PluginCommandResult {
-  const args = ctx.args?.trim() || "";
-  const hasForce = args.includes("--force");
-  // Extract project ID by removing the --force flag
-  const projectId = args.replace(/--force/g, "").trim();
+export function handleProjectDelete(_ctx: PluginCommandContext): PluginCommandResult {
+  return { text: "Use `openclaw research delete <id>` to delete a research project." };
+}
 
-  if (!projectId) {
-    return { text: "❌ Usage: `/project-delete <project-id>`" };
+/**
+ * Resolve which research agent to use.
+ * If an arg is given, match by project id; otherwise use the first (or only) agent.
+ */
+function resolveAgent(arg?: string): ResearchAgent | null {
+  const agents = listResearchAgents();
+  if (agents.length === 0) return null;
+
+  if (arg) {
+    const agentId = arg.startsWith("research-") ? arg : `research-${arg}`;
+    return agents.find((a) => a.id === agentId) ?? null;
   }
 
-  const projectPath = path.join(WORKSPACE_ROOT, projectId);
-  if (!fs.existsSync(projectPath)) {
-    return { text: `❌ Project '${projectId}' not found.` };
-  }
-
-  const size = formatSize(getDirSize(projectPath));
-  const papersCount = countFiles(path.join(projectPath, "papers"));
-  const ideasCount = countFiles(path.join(projectPath, "ideas"), /\.md$/);
-
-  // For safety, we'll return info and ask for confirmation
-  // Note: Plugin commands don't support interactive confirmation,
-  // so we provide a force flag via the args
-  if (!hasForce) {
-    return {
-      text:
-        `⚠️ **About to delete:**\n\n` +
-        `- Project: \`${projectId}\`\n` +
-        `- Papers: ${papersCount}\n` +
-        `- Ideas: ${ideasCount}\n` +
-        `- Size: ${size}\n\n` +
-        `To confirm, use: \`/project-delete ${projectId} --force\``,
-    };
-  }
-
-  // Clear active if this is the active project
-  const activeProject = getActiveProject();
-  if (activeProject === projectId) {
-    try {
-      fs.unlinkSync(path.join(WORKSPACE_ROOT, ".active"));
-    } catch {
-      // ignore
-    }
-  }
-
-  // Delete the project directory
-  fs.rmSync(projectPath, { recursive: true, force: true });
-  return { text: `✓ Deleted project '**${projectId}**'` };
+  return agents[0] ?? null;
 }

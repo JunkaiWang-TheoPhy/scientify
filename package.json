@@ -40,8 +40,7 @@
     "release": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.32.0",
-    "tar": "^7.0.0"
+    "@sinclair/typebox": "^0.32.0"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",

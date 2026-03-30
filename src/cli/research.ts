@@ -119,7 +119,7 @@ function listResearchProjects(): ResearchProject[] {
 
     let currentDay = 0;
     let createdAt = "";
-    const configPath = path.join(workspace, "metabolism", "config.json");
+    const configPath = path.join(workspace, "config.json");
     try {
       const mc = JSON.parse(fs.readFileSync(configPath, "utf-8"));
       currentDay = mc.currentDay ?? 0;
@@ -153,16 +153,12 @@ function initProject(id: string, pluginSkillsDir: string): void {
   // 1. Create workspace directory structure
   const dirs = [
     workspace,
-    path.join(workspace, "metabolism"),
-    path.join(workspace, "metabolism", "knowledge"),
-    path.join(workspace, "metabolism", "diffs"),
-    path.join(workspace, "metabolism", "hypotheses"),
-    path.join(workspace, "metabolism", "log"),
-    path.join(workspace, "skills", "metabolism"),
-    path.join(workspace, "survey"),
     path.join(workspace, "papers"),
+    path.join(workspace, "knowledge"),
     path.join(workspace, "ideas"),
     path.join(workspace, "experiments"),
+    path.join(workspace, "log"),
+    path.join(workspace, "skills", "metabolism"),
   ];
   for (const dir of dirs) {
     fs.mkdirSync(dir, { recursive: true });
@@ -224,26 +220,16 @@ function showStatus(id: string): void {
     process.exit(1);
   }
 
-  const knowledgeDir = path.join(project.workspace, "metabolism", "knowledge");
-  const hypothesesDir = path.join(project.workspace, "metabolism", "hypotheses");
-  const diffsDir = path.join(project.workspace, "metabolism", "diffs");
-
+  const knowledgeDir = path.join(project.workspace, "knowledge");
+  const hypothesesDir = path.join(project.workspace, "ideas");
   let topicCount = 0;
   let hypothesisCount = 0;
-  let latestDiffs: string[] = [];
 
   try {
     topicCount = fs.readdirSync(knowledgeDir).filter((f) => f.startsWith("topic-")).length;
   } catch { /* empty */ }
   try {
     hypothesisCount = fs.readdirSync(hypothesesDir).filter((f) => f.endsWith(".md")).length;
-  } catch { /* empty */ }
-  try {
-    latestDiffs = fs
-      .readdirSync(diffsDir)
-      .filter((f) => f.endsWith(".md"))
-      .sort()
-      .slice(-3);
   } catch { /* empty */ }
 
   console.log(`\nResearch Project: ${id}`);
@@ -252,9 +238,6 @@ function showStatus(id: string): void {
   console.log(`  Day:        ${project.currentDay}`);
   console.log(`  Topics:     ${topicCount}`);
   console.log(`  Hypotheses: ${hypothesisCount}`);
-  if (latestDiffs.length > 0) {
-    console.log(`  Recent diffs: ${latestDiffs.join(", ")}`);
-  }
   if (project.createdAt) {
     console.log(`  Created:    ${project.createdAt}`);
   }

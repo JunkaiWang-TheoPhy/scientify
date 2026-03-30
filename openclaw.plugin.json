@@ -5,19 +5,7 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "properties": {
-      "autoUpdate": {
-        "type": "boolean",
-        "default": true,
-        "description": "Automatically check and install updates (default: true)"
-      }
-    }
-  },
-  "uiHints": {
-    "autoUpdate": {
-      "label": "Auto Update",
-      "description": "Silently check for and install Scientify updates"
-    }
+    "properties": {}
   },
   "skills": [
     "skills/idea-generation",
@@ -28,9 +16,8 @@
     "skills/research-review",
     "skills/research-experiment",
     "skills/research-collect",
+    "skills/paper-download",
     "skills/write-review-paper",
-    "skills/research-subscription",
-    "skills/metabolism",
-    "skills/metabolism-init"
+    "skills/metabolism"
   ]
 }

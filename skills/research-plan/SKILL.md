@@ -14,17 +14,14 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
 
 ## Prerequisites
 
 | File | Source |
 |------|--------|
-| `$W/task.json` | /research-pipeline or user |
-| `$W/survey_res.md` | /research-survey |
-| `$W/notes/paper_*.md` | /research-survey |
-| `$W/repos/` | /research-collect Phase 3 |
-| `$W/prepare_res.md` | /research-collect Phase 3 |
+| `SOUL.md` | 研究方向和目标 |
+| `survey_res.md` | /research-survey |
+| `knowledge/paper_*.md` | /research-survey |
 
 **If `survey_res.md` is missing, STOP:** "需要先运行 /research-survey 完成深度分析"
 
@@ -32,7 +29,7 @@ metadata:
 
 | File | Content |
 |------|---------|
-| `$W/plan_res.md` | 四部分实现计划 |
+| `plan_res.md` | 四部分实现计划 |
 
 ---
 
@@ -41,9 +38,8 @@ metadata:
 ### Step 1: 读取上下文
 
 读取以下文件，理解研究目标和技术方案：
-- `$W/task.json` — 研究目标
-- `$W/survey_res.md` — 技术路线建议、核心公式、**公式→代码映射表**、参考代码架构摘要
-- `$W/prepare_res.md` — 参考仓库列表及关键文件说明
+- `SOUL.md` — 研究方向和目标
+- `survey_res.md` — 技术路线建议、核心公式、方法对比
 
 ### Step 2: 参考代码深度分析
 
@@ -59,7 +55,7 @@ metadata:
 
 ### Step 3: 制定四部分计划
 
-写入 `$W/plan_res.md`：
+写入 `plan_res.md`：
 
 ```markdown
 # Implementation Plan

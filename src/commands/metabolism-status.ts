@@ -29,10 +29,10 @@ function findProjectWorkspace(): { workspace: string; projectId: string } | null
   const agents = (config.agents as { list?: Array<{ id: string; workspace?: string }> })?.list ?? [];
   const researchAgents = agents.filter((a) => a.id.startsWith("research-"));
 
-  // Try each research agent workspace to find one with metabolism/config.json
+  // Try each research agent workspace to find one with config.json
   for (const agent of researchAgents) {
     const workspace = (agent.workspace ?? `~/.openclaw/workspace-${agent.id}`).replace("~", os.homedir());
-    const metabolismConfig = path.join(workspace, "metabolism", "config.json");
+    const metabolismConfig = path.join(workspace, "config.json");
     if (fs.existsSync(metabolismConfig)) {
       return { workspace, projectId: agent.id.replace("research-", "") };
     }
@@ -50,7 +50,7 @@ function findProjectWorkspace(): { workspace: string; projectId: string } | null
 
 function readMetabolismConfig(workspace: string): MetabolismConfig | null {
   try {
-    return JSON.parse(fs.readFileSync(path.join(workspace, "metabolism", "config.json"), "utf-8"));
+    return JSON.parse(fs.readFileSync(path.join(workspace, "config.json"), "utf-8"));
   } catch {
     return null;
   }
@@ -65,18 +65,6 @@ function countFiles(dirPath: string, filter?: (name: string) => boolean): number
   }
 }
 
-function readRecentDiffs(workspace: string, count: number): string[] {
-  const diffsDir = path.join(workspace, "metabolism", "diffs");
-  try {
-    return fs
-      .readdirSync(diffsDir)
-      .filter((f) => f.endsWith(".md"))
-      .sort()
-      .slice(-count);
-  } catch {
-    return [];
-  }
-}
 
 /**
  * /metabolism-status — Show knowledge metabolism status
@@ -91,15 +79,13 @@ export function handleMetabolismStatus(_ctx: PluginCommandContext): PluginComman
   const config = readMetabolismConfig(workspace);
 
   const topicCount = countFiles(
-    path.join(workspace, "metabolism", "knowledge"),
+    path.join(workspace, "knowledge"),
     (f) => f.startsWith("topic-"),
   );
   const hypothesisCount = countFiles(
-    path.join(workspace, "metabolism", "hypotheses"),
+    path.join(workspace, "ideas"),
     (f) => f.endsWith(".md"),
   );
-  const recentDiffs = readRecentDiffs(workspace, 3);
-
   let output = `**Metabolism Status — ${projectId}**\n\n`;
 
   if (!config) {
@@ -114,13 +100,6 @@ export function handleMetabolismStatus(_ctx: PluginCommandContext): PluginComman
   output += `Topics: ${topicCount}\n`;
   output += `Hypotheses: ${hypothesisCount}\n`;
   output += `Heartbeat: ${heartbeatStatus}\n`;
-
-  if (recentDiffs.length > 0) {
-    output += `\nRecent diffs:\n`;
-    for (const diff of recentDiffs) {
-      output += `  ${diff}\n`;
-    }
-  }
 
   return { text: output };
 }

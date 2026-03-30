@@ -13,14 +13,14 @@ export function renderBootstrapMd(projectName: string): string {
 1. 向用户问好，说明你是课题「${projectName}」的研究 agent，请用户描述研究方向
 2. 根据用户回答，提取：
    - 核心域关键词（3-5 个）
-   - 建议的 arXiv 分类（如 cs.LG, cs.AI）
-   - 建议的监测带相邻领域分类
-3. 向用户确认以上配置，接受调整
+   - 建议的 arXiv 分类（如 cs.LG, cs.AI），如果研究方向不属于 arXiv 覆盖范围则留空
+   - 建议的文献来源偏好（arXiv、OpenAlex、或两者兼用）
+3. 与用户讨论研究方向的边界和重点，确认以上配置，接受调整
 4. 确认后执行以下写入操作：
-   - 更新 SOUL.md：填写研究方向、核心域、监测带各字段
-   - 生成 metabolism/config.json（参考下方模板）
-5. 询问用户是否立即执行 Day 0（构建初始知识状态 K(T0)）
-   - 如果是，使用 arxiv_search 按配置的关键词检索论文，执行 skills/metabolism/SKILL.md 中的四步循环
+   - 更新 SOUL.md：填写研究方向、核心域各字段
+   - 生成 config.json（参考下方模板）
+5. 询问用户是否立即执行 Day 0（构建初始知识状态）
+   - 如果是，执行 /metabolism 完成首轮文献检索和知识库构建（Day 0 模式）
 6. 删除本文件（BOOTSTRAP.md）
 
 ## config.json 模板
@@ -28,25 +28,17 @@ export function renderBootstrapMd(projectName: string): string {
 \`\`\`json
 {
   "projectId": "${projectName}",
-  "coreQuery": {
-    "keywords": ["关键词1", "关键词2"],
-    "arxivCategories": ["cs.LG"],
-    "dateMode": "daily-new"
-  },
-  "monitorZone": {
-    "categories": ["相邻领域分类"],
-    "enabled": true
-  },
-  "heartbeat": {
-    "cronExpression": "0 6 * * *",
-    "timezone": "Asia/Shanghai",
-    "enabled": true
-  },
-  "agentId": "research-${projectName}",
+  "keywords": ["关键词1", "关键词2"],
+  "arxivCategories": ["cs.LG"],
+  "sources": ["arxiv", "openalex"],
   "currentDay": 0,
+  "processed_ids": [],
   "createdAt": "${new Date().toISOString()}"
 }
 \`\`\`
+
+> **注意：** \`arxivCategories\` 和 \`sources\` 根据研究领域灵活配置。
+> 自然科学、社会科学等非 CS 领域可将 \`arxivCategories\` 设为 \`[]\`，主要依赖 OpenAlex。
 `;
 }
 
@@ -60,10 +52,8 @@ export function renderSoulMd(projectName: string): string {
 
 ## 核心域
 关键词: {由 BOOTSTRAP 流程填写}
-arXiv 分类: {由 BOOTSTRAP 流程填写}
-
-## 监测带
-相邻领域: {由 BOOTSTRAP 流程填写}
+arXiv 分类: {由 BOOTSTRAP 流程填写，不适用则留空}
+文献来源: {arXiv / OpenAlex / 两者兼用}
 `;
 }
 
@@ -78,34 +68,29 @@ export function renderAgentsMd(): string {
 $W/
 ├── SOUL.md                      # 身份 + 研究方向
 ├── AGENTS.md                    # 本文档
-├── metabolism/                  # 知识新陈代谢
-│   ├── config.json              # 项目配置（关键词、分类、heartbeat）
-│   ├── knowledge/               # K(t) 持久知识状态
-│   │   ├── _index.md            # 全景索引
-│   │   └── topic-*.md           # 主题文件（上限 50）
-│   ├── diffs/                   # 每日 diff 报告
-│   ├── hypotheses/              # 生成的假设
-│   └── log/                     # 运行日志
-├── survey/                      # /research-collect outputs
-│   ├── search_terms.json
-│   └── report.md
-├── papers/                      # 下载的论文
-│   ├── _downloads/              # 原始下载
-│   ├── _meta/                   # 元数据 {arxiv_id}.json
-│   └── {direction}/             # 按方向分类
-├── repos/                       # 参考代码仓库
-├── notes/                       # /research-survey: 逐篇深度笔记
-│   └── paper_{arxiv_id}.md
-├── ideas/                       # /idea-generation outputs
-├── review/                      # /write-review-paper outputs
-├── survey_res.md                # /research-survey: 方法对比报告
-├── plan_res.md                  # /research-plan: 实现计划
-├── project/                     # /research-implement: 代码实现
-├── ml_res.md                    # /research-implement: 执行报告
-├── iterations/                  # /research-review: 审查迭代
-│   └── judge_v*.md
-├── experiment_res.md            # /research-experiment: 实验报告
-└── skills/                      # workspace skills (metabolism 等)
+├── config.json                  # 项目配置（关键词、分类、当前天数）
+│
+├── papers/                      # 文献区：下载的论文
+│   ├── {arxiv_id}/              # arXiv 论文源文件
+│   └── {doi_slug}.pdf           # PDF 文件
+│
+├── knowledge/                   # 知识区：持久知识状态
+│   ├── _index.md                # 全景索引
+│   └── topic-*.md               # 主题文件（上限 50）
+│
+├── ideas/                       # 想法区：假设与研究想法
+│   ├── hyp-*.md                 # 生成的假设
+│   └── selected_idea.md         # 选中的研究想法
+│
+├── experiments/                 # 实验代码区
+│   ├── run.py                   # 入口脚本
+│   ├── requirements.txt
+│   └── results/                 # 实验结果
+│
+├── log/                         # 运行日志
+│   └── {YYYY-MM-DD}.md
+│
+└── skills/                      # workspace skills
 \`\`\`
 
 ## Session Context
@@ -143,12 +128,13 @@ $W/
 
 | Skill | Primary Outputs |
 |-------|-----------------|
-| /research-collect | survey/, papers/ |
-| /research-survey | notes/paper_*.md, survey_res.md |
+| /metabolism | Day 0: config.json, knowledge/ / Day 1+: papers/, knowledge/, ideas/hyp-*.md, log/ |
+| /research-collect | papers/ |
+| /research-survey | knowledge/, survey_res.md |
 | /research-plan | plan_res.md |
-| /research-implement | project/, ml_res.md |
-| /research-review | iterations/judge_v*.md |
-| /research-experiment | experiment_res.md |
+| /research-implement | experiments/ |
+| /research-review | experiments/review/ |
+| /research-experiment | experiments/results/ |
 | /idea-generation | ideas/ |
 | /write-review-paper | review/ |
 `;

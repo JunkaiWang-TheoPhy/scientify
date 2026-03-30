@@ -1,6 +1,6 @@
 # Paper Note Template
 
-Use this template for each paper in `~/.openclaw/workspace/literature/notes/`.
+Use this template for each paper in `knowledge/`.
 
 ---
 

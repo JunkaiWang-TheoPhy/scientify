@@ -19,27 +19,25 @@ Generate innovative research ideas grounded in literature analysis. This skill r
 
 **Core principle:** Ideas MUST be grounded in actual papers, not generated from model knowledge.
 
-**Workspace:** `$W` = working directory provided in task parameter. Outputs go to `$W/ideas/`.
+Outputs go to `ideas/`.
 
 ---
 
 ## Step 1: Check Workspace Resources
 
-First, check what resources already exist in `$W`:
+First, check what resources already exist:
 
 ```bash
-ls $W/papers/ 2>/dev/null | head -20
-ls $W/papers/_meta/ 2>/dev/null | head -10
-ls $W/survey/ 2>/dev/null
+ls papers/ 2>/dev/null | head -20
+ls knowledge/ 2>/dev/null
 ```
 
 ### Assess Available Resources
 
 | Resource | Location | Status |
 |----------|----------|--------|
-| Papers | `$W/papers/` | Count: ? |
-| Survey clusters | `$W/survey/clusters.json` | Exists: Y/N |
-| Repos | `$W/repos/` | Count: ? |
+| Papers | `papers/` | Count: ? |
+| Knowledge | `knowledge/_index.md` | Exists: Y/N |
 
 ---
 
@@ -77,7 +75,7 @@ This will:
 - Search 100+ papers systematically
 - Filter by relevance (score ≥4)
 - Cluster into research directions
-- Save to $W/papers/
+- Save to papers/
 
 After survey completes, run /idea-generation again.
 ```
@@ -86,31 +84,25 @@ After survey completes, run /idea-generation again.
 
 For fast iteration, do minimal search:
 
-1. **ArXiv search:**
+1. **Search papers:**
 ```
-Tool: arxiv_search
-Arguments:
-  query: "{user_topic}"
-  max_results: 10
+arxiv_search({ query: "{user_topic}", max_results: 10 })
+openalex_search({ query: "{user_topic}", max_results: 10 })
 ```
 
-2. **Clone 3-5 reference repos:**
-```bash
-mkdir -p $W/repos
-git clone --depth 1 {repo_url} $W/repos/{name}
-```
+2. **Download papers:** 按 /paper-download 的方式下载到 `papers/`
 
-3. **Download paper sources:**
+3. **Clone reference repos (optional):**
 ```bash
-mkdir -p $W/papers/{arxiv_id}
-curl -L "https://arxiv.org/src/{arxiv_id}" | tar -xz -C $W/papers/{arxiv_id}
+gh search repos "{paper_title} implementation" --limit 5 --sort stars
+git clone --depth 1 {repo_url} repos/{name}
 ```
 
 ---
 
 ## Step 4: Analyze Literature
 
-**Prerequisites:** At least 5 papers in `$W/papers/`
+**Prerequisites:** At least 5 papers in `papers/`
 
 ### 4.1 Read Papers
 
@@ -130,7 +122,7 @@ Look for:
 - Scalability issues
 - Assumptions that could be relaxed
 
-Document gaps in `$W/ideas/gaps.md`:
+Document gaps in `ideas/gaps.md`:
 ```markdown
 # Research Gaps Identified
 
@@ -146,7 +138,7 @@ Document gaps in `$W/ideas/gaps.md`:
 
 ## Step 5: Generate 5 Ideas
 
-Create `$W/ideas/idea_1.md` through `idea_5.md` using template in `references/idea-template.md`.
+Create `ideas/idea_1.md` through `idea_5.md` using template in `references/idea-template.md`.
 
 **Requirements:**
 - Each idea cites ≥2 papers by arXiv ID
@@ -175,27 +167,11 @@ Create `$W/ideas/idea_1.md` through `idea_5.md` using template in `references/id
 
 ### 6.2 Enhance Selected Idea
 
-Create `$W/ideas/selected_idea.md` with:
+Create `ideas/selected_idea.md` with:
 - Detailed math (loss functions, gradients)
 - Architecture choices
 - Hyperparameters
 - Implementation roadmap
-
-### 6.3 (Optional but recommended) OpenReview Evidence Check
-
-For the top 1-2 shortlisted ideas, validate novelty/positioning risk with `openreview_lookup`:
-
-- Query using core title keywords or representative baseline paper title
-- Extract evidence:
-  - decision (if available)
-  - average rating/confidence
-  - reviewer weakness patterns
-- Add a short "submission risk note" section per idea:
-  - likely reviewer concern
-  - mitigation experiment to add
-  - positioning adjustment
-
-Do not claim accept/reject predictions as facts. Report evidence-backed risk signals only.
 
 ---
 
@@ -205,13 +181,13 @@ Map idea concepts to reference implementations.
 
 See `references/code-mapping.md` for template.
 
-**Output:** `$W/ideas/implementation_report.md`
+**Output:** `ideas/implementation_report.md`
 
 ---
 
 ## Step 8: Summary
 
-Create `$W/ideas/summary.md`:
+Create `ideas/summary.md`:
 - All 5 ideas with scores
 - Selected idea details
 - Next steps: `/research-pipeline` to implement

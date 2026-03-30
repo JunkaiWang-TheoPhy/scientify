@@ -15,16 +15,15 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
 
 ## Prerequisites
 
 | File | Source |
 |------|--------|
-| `$W/ml_res.md` | /research-implement |
-| `$W/project/` | /research-implement |
-| `$W/plan_res.md` | /research-plan |
-| `$W/survey_res.md` | /research-survey |
+| `ml_res.md` | /research-implement |
+| `project/` | /research-implement |
+| `plan_res.md` | /research-plan |
+| `survey_res.md` | /research-survey |
 
 **If `ml_res.md` is missing, STOP:** "需要先运行 /research-implement 完成代码实现"
 
@@ -32,7 +31,7 @@ metadata:
 
 | File | Content |
 |------|---------|
-| `$W/iterations/judge_v{N}.md` | 每轮审查报告 |
+| `iterations/judge_v{N}.md` | 每轮审查报告 |
 
 最终报告中 `verdict: PASS` 表示审查通过。
 
@@ -43,16 +42,16 @@ metadata:
 ### Step 1: 审查代码
 
 读取以下内容：
-- `$W/plan_res.md` — 每个组件的预期
-- `$W/survey_res.md` — 核心公式
-- `$W/project/` — 实际代码
-- `$W/ml_res.md` — 执行结果
+- `plan_res.md` — 每个组件的预期
+- `survey_res.md` — 核心公式
+- `project/` — 实际代码
+- `ml_res.md` — 执行结果
 
 ### Step 2: 提取原子性概念清单
 
 **⚠️ 这是 Novix Judge Agent 的核心机制 — 逐一核对每个原子性学术概念。**
 
-从 `$W/survey_res.md` 的"关键公式汇总"和"核心方法对比"中，提取所有需要在代码中实现的**原子性学术概念**（每个公式、每个核心组件都是一个概念）。
+从 `survey_res.md` 的"关键公式汇总"和"核心方法对比"中，提取所有需要在代码中实现的**原子性学术概念**（每个公式、每个核心组件都是一个概念）。
 
 为每个概念记录：
 - 概念名称（如 "Multi-Head Attention", "Contrastive Loss", "Batch Normalization"）
@@ -123,7 +122,7 @@ metadata:
 
 ### Step 4: 写入审查报告
 
-写入 `$W/iterations/judge_v1.md`：
+写入 `iterations/judge_v1.md`：
 
 ```markdown
 # Review v1
@@ -201,14 +200,14 @@ metadata:
 循环最多 3 次：
 
 1. 读取 `judge_v{N}.md` 的修改建议
-2. **防偏移检查：重新读取** `$W/survey_res.md` 和 `$W/plan_res.md`
+2. **防偏移检查：重新读取** `survey_res.md` 和 `plan_res.md`
    - 对照原始学术设计目标
    - 确保修改不是为了"绕过审查"而偏离学术严谨性
    - 确认修改符合 survey 中的公式定义和 plan 中的设计意图
-3. 修改 `$W/project/` 中的代码（修复 bug、补全缺失实现）
+3. 修改 `project/` 中的代码（修复 bug、补全缺失实现）
 4. 重新执行：
    ```bash
-   cd $W/project && source .venv/bin/activate && python3 run.py --epochs 2
+   cd project && source .venv/bin/activate && python3 run.py --epochs 2
    ```
 5. 读取执行输出，验证修复
 6. **重新执行 Step 2-4**（提取概念清单 → 逐项检查 → 写报告），写入 `judge_v{N+1}.md`
@@ -225,10 +224,10 @@ metadata:
 #### 5b.1 性能诊断
 
 重新读取以下材料进行诊断：
-- `$W/ml_res.md` — 2 epoch 验证的具体数值
-- `$W/survey_res.md` — baseline 方法的超参数设置（特别是学习率、batch size）
-- `$W/plan_res.md` — 当前实现的超参数配置
-- `$W/project/run.py` 和 `$W/project/training/` — 训练配置代码
+- `ml_res.md` — 2 epoch 验证的具体数值
+- `survey_res.md` — baseline 方法的超参数设置（特别是学习率、batch size）
+- `plan_res.md` — 当前实现的超参数配置
+- `project/run.py` 和 `project/training/` — 训练配置代码
 
 **诊断检查清单**：
 
@@ -255,11 +254,11 @@ metadata:
 1. **调整学习率**（优先级：高，预期改善：显著）
    - **当前值**: lr=1e-5 (from plan_res.md)
    - **建议值**: lr=1e-3 (from survey_res.md Table 2, all baselines use 1e-3)
-   - **修改位置**: `$W/project/run.py:L15` — `optimizer = Adam(lr=1e-3)`
+   - **修改位置**: `project/run.py:L15` — `optimizer = Adam(lr=1e-3)`
    - **理由**: Loss 下降仅 0.9%，远低于正常 10%+，高度怀疑 lr 过小
 
 2. **添加数据归一化**（优先级：中，预期改善：中等）
-   - **检查**: `$W/project/data/dataset.py` 是否有归一化
+   - **检查**: `project/data/dataset.py` 是否有归一化
    - **建议**: 添加 `transforms.Normalize(mean=[0.5], std=[0.5])`
    - **理由**: 如果输入数据范围 [0,255]，模型收敛会很慢
 ```
@@ -269,7 +268,7 @@ metadata:
 1. 根据建议**逐项尝试**（从优先级高的开始）
 2. 每次修改后：
    ```bash
-   cd $W/project && source .venv/bin/activate && python3 run.py --epochs 2
+   cd project && source .venv/bin/activate && python3 run.py --epochs 2
    ```
 3. 读取新的执行输出，对比改进前后：
    - Loss reduction 是否提升？（如 0.9% → 12%）

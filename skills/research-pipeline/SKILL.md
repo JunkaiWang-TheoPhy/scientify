@@ -92,19 +92,11 @@ task 必须以 `/skill-name` 开头（触发 slash command 解析），后续行
 
 ---
 
-## Workspace
-
-`$W` = agent workspace root (see AGENTS.md for layout).
-
----
-
 ## Step 0: 初始化
 
-`$W` 即当前 agent 的工作目录（AGENTS.md 中定义）。
+检查 `SOUL.md` 是否包含研究方向信息。如果没有（BOOTSTRAP 未完成），提示用户先完成 BOOTSTRAP 配置。
 
-检查 `$W/SOUL.md` 是否包含研究方向信息。如果没有（BOOTSTRAP 未完成），提示用户先完成 BOOTSTRAP 配置。
-
-确保 `$W` 下存在必要的子目录（如 `survey/`, `papers/` 等）。
+确保 `papers/`、`knowledge/`、`ideas/`、`experiments/` 目录存在。
 
 ---
 
@@ -114,65 +106,65 @@ task 必须以 `/skill-name` 开头（触发 slash command 解析），后续行
 
 ### Phase 1: Literature Survey
 
-**检查:** `$W/papers/_meta/` 目录存在且有 `.json` 文件？
+**检查:** `papers/` 目录存在且有论文文件？
 
 **如果缺失，调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-collect\n工作目录: {$W绝对路径}\n研究主题: {从task.json提取}\n请搜索、筛选、下载论文到工作目录的 papers/ 下。"`
+- task: `"/research-collect\n研究主题: {从SOUL.md提取}\n请搜索、筛选、下载论文到工作目录的 papers/ 下。"`
 - label: `"Research Collect"`
 - runTimeoutSeconds: `1800`
 
-**验证:** `ls $W/papers/_meta/*.json` 至少有 3 个文件
+**验证:** `ls papers/` 至少有 3 篇论文
 
 ---
 
 ### Phase 2: Deep Survey
 
-**检查:** `$W/survey_res.md` 存在？
+**检查:** `survey_res.md` 存在？
 
 **如果缺失，先读取 Phase 1 摘要（论文数量、方向），然后调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-survey\n工作目录: {$W绝对路径}\n上下文: 已下载 {N} 篇论文，方向包括 {directions}。\n重点论文: {top 3 arxiv_id 和标题}\n请深度分析论文、提取公式，写入 survey_res.md。"`
+- task: `"/research-survey\n上下文: 已下载 {N} 篇论文，方向包括 {directions}。\n重点论文: {top 3 arxiv_id 和标题}\n请深度分析论文、提取公式，写入 survey_res.md。"`
 - label: `"Deep Survey"`
 - runTimeoutSeconds: `1800`
 
-**验证:** `$W/survey_res.md` 存在且包含"核心方法对比"表格
+**验证:** `survey_res.md` 存在且包含"核心方法对比"表格
 
 ---
 
 ### Phase 3: Implementation Plan
 
-**检查:** `$W/plan_res.md` 存在？
+**检查:** `plan_res.md` 存在？
 
 **如果缺失，读取 survey_res.md 摘要，然后调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-plan\n工作目录: {$W绝对路径}\n上下文: 调研发现核心方法是 {method}，推荐技术路线 {route}。\n关键公式: {1-2个公式}\n请制定实现计划到 plan_res.md。"`
+- task: `"/research-plan\n上下文: 调研发现核心方法是 {method}，推荐技术路线 {route}。\n关键公式: {1-2个公式}\n请制定实现计划到 plan_res.md。"`
 - label: `"Research Plan"`
 - runTimeoutSeconds: `1800`
 
-**验证:** `$W/plan_res.md` 存在且包含 4 个 section（Dataset/Model/Training/Testing）
+**验证:** `plan_res.md` 存在且包含 4 个 section（Dataset/Model/Training/Testing）
 
 ---
 
 ### Phase 4: Implementation
 
-**检查:** `$W/ml_res.md` 存在？
+**检查:** `ml_res.md` 存在？
 
 **如果缺失，读取 plan_res.md 要点，然后调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-implement\n工作目录: {$W绝对路径}\n上下文:\n- 计划包含 {N} 个组件: {list}\n- 数据集: {dataset}\n- 框架: PyTorch\n请实现代码到 project/，运行 2 epoch 验证，写入 ml_res.md。"`
+- task: `"/research-implement\n上下文:\n- 计划包含 {N} 个组件: {list}\n- 数据集: {dataset}\n- 框架: PyTorch\n请实现代码到 project/，运行 2 epoch 验证，写入 ml_res.md。"`
 - label: `"Research Implement"`
 - runTimeoutSeconds: `1800`
 
 **验证:**
-- `$W/project/run.py` 存在
-- `$W/ml_res.md` 包含 `[RESULT]` 行
+- `project/run.py` 存在
+- `ml_res.md` 包含 `[RESULT]` 行
 - loss 值非 NaN/Inf
 
 ---
 
 ### Phase 5: Review
 
-**检查:** `$W/iterations/` 下最新 `judge_v*.md` 的 verdict 是否为 PASS？
+**检查:** `iterations/` 下最新 `judge_v*.md` 的 verdict 是否为 PASS？
 
 **如果没有 PASS，调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-review\n工作目录: {$W绝对路径}\n上下文:\n- ml_res.md 显示 train_loss={value}\n- 计划在 plan_res.md\n请审查代码，如需修改则迭代修复（最多 3 轮）。"`
+- task: `"/research-review\n上下文:\n- ml_res.md 显示 train_loss={value}\n- 计划在 plan_res.md\n请审查代码，如需修改则迭代修复（最多 3 轮）。"`
 - label: `"Research Review"`
 - runTimeoutSeconds: `1800`
 
@@ -184,14 +176,14 @@ task 必须以 `/skill-name` 开头（触发 slash command 解析），后续行
 
 ### Phase 6: Full Experiment
 
-**检查:** `$W/experiment_res.md` 存在？
+**检查:** `experiment_res.md` 存在？
 
 **如果缺失，调用 sessions_spawn 工具（然后停止，等待完成通知）：**
-- task: `"/research-experiment\n工作目录: {$W绝对路径}\n上下文:\n- Review PASS，代码已验证\n- plan_res.md 中指定 full epochs\n请执行完整训练 + 消融实验，写入 experiment_res.md。"`
+- task: `"/research-experiment\n上下文:\n- Review PASS，代码已验证\n- plan_res.md 中指定 full epochs\n请执行完整训练 + 消融实验，写入 experiment_res.md。"`
 - label: `"Research Experiment"`
 - runTimeoutSeconds: `1800`
 
-**验证:** `$W/experiment_res.md` 包含 `[RESULT]` 行和消融表格
+**验证:** `experiment_res.md` 包含 `[RESULT]` 行和消融表格
 
 ---
 
@@ -202,9 +194,9 @@ task 必须以 `/skill-name` 开头（触发 slash command 解析），后续行
 ```
 研究流程完成！
 - 论文: {N} 篇分析
-- 代码: $W/project/
-- 结果: $W/experiment_res.md
-- 审查: $W/iterations/ ({N} 轮)
+- 代码: project/
+- 结果: experiment_res.md
+- 审查: iterations/ ({N} 轮)
 ```
 
 ---

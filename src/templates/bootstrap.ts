@@ -13,14 +13,14 @@ export function renderBootstrapMd(projectName: string): string {
 1. 向用户问好，说明你是课题「${projectName}」的研究 agent，请用户描述研究方向
 2. 根据用户回答，提取：
    - 核心域关键词（3-5 个）
-   - 建议的 arXiv 分类（如 cs.LG, cs.AI）
-   - 建议的监测带相邻领域分类
-3. 向用户确认以上配置，接受调整
+   - 建议的 arXiv 分类（如 cs.LG, cs.AI），如果研究方向不属于 arXiv 覆盖范围则留空
+   - 建议的文献来源偏好（arXiv、OpenAlex、或两者兼用）
+3. 与用户讨论研究方向的边界和重点，确认以上配置，接受调整
 4. 确认后执行以下写入操作：
    - 更新 SOUL.md：填写研究方向、核心域各字段
    - 生成 config.json（参考下方模板）
-5. 询问用户是否立即执行 Day 0（构建初始知识状态 K(T0)）
-   - 如果是，使用 arxiv_search 按配置的关键词检索论文，执行 skills/metabolism/SKILL.md 中的四步循环
+5. 询问用户是否立即执行 Day 0（构建初始知识状态）
+   - 如果是，执行 /metabolism 完成首轮文献检索和知识库构建（Day 0 模式）
 6. 删除本文件（BOOTSTRAP.md）
 
 ## config.json 模板
@@ -30,11 +30,15 @@ export function renderBootstrapMd(projectName: string): string {
   "projectId": "${projectName}",
   "keywords": ["关键词1", "关键词2"],
   "arxivCategories": ["cs.LG"],
+  "sources": ["arxiv", "openalex"],
   "currentDay": 0,
   "processed_ids": [],
   "createdAt": "${new Date().toISOString()}"
 }
 \`\`\`
+
+> **注意：** \`arxivCategories\` 和 \`sources\` 根据研究领域灵活配置。
+> 自然科学、社会科学等非 CS 领域可将 \`arxivCategories\` 设为 \`[]\`，主要依赖 OpenAlex。
 `;
 }
 
@@ -48,7 +52,8 @@ export function renderSoulMd(projectName: string): string {
 
 ## 核心域
 关键词: {由 BOOTSTRAP 流程填写}
-arXiv 分类: {由 BOOTSTRAP 流程填写}
+arXiv 分类: {由 BOOTSTRAP 流程填写，不适用则留空}
+文献来源: {arXiv / OpenAlex / 两者兼用}
 `;
 }
 
@@ -123,8 +128,7 @@ $W/
 
 | Skill | Primary Outputs |
 |-------|-----------------|
-| /metabolism-init | config.json, knowledge/ |
-| /metabolism | papers/, knowledge/, ideas/hyp-*.md, log/ |
+| /metabolism | Day 0: config.json, knowledge/ / Day 1+: papers/, knowledge/, ideas/hyp-*.md, log/ |
 | /research-collect | papers/ |
 | /research-survey | knowledge/, survey_res.md |
 | /research-plan | plan_res.md |

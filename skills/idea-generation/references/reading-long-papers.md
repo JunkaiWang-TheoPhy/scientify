@@ -5,8 +5,8 @@ For papers >50KB or >15k tokens, use chunked reading.
 ## Step 1: Structure Scan
 
 ```bash
-ls -la $WORKSPACE/papers/{arxiv_id}/
-wc -l $WORKSPACE/papers/{arxiv_id}/*.tex
+ls -la papers/{arxiv_id}/
+wc -l papers/{arxiv_id}/*.tex
 ```
 
 ## Step 2: Chunked Reading
@@ -16,7 +16,7 @@ Use Read tool with `offset` and `limit`:
 ```
 Tool: Read
 Arguments:
-  file_path: "$WORKSPACE/papers/2404.04429/main.tex"
+  file_path: "papers/2404.04429/main.tex"
   offset: 1
   limit: 500    # First 500 lines
 ```

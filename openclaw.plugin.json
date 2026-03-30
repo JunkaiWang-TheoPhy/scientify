@@ -16,8 +16,8 @@
     "skills/research-review",
     "skills/research-experiment",
     "skills/research-collect",
+    "skills/paper-download",
     "skills/write-review-paper",
-    "skills/metabolism",
-    "skills/metabolism-init"
+    "skills/metabolism"
   ]
 }

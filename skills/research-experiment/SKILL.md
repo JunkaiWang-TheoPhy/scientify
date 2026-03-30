@@ -15,15 +15,14 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
 
 ## Prerequisites
 
 | File | Source |
 |------|--------|
-| `$W/project/` | /research-implement |
-| `$W/plan_res.md` | /research-plan |
-| `$W/iterations/judge_v*.md` | /research-review（最后一份 verdict 必须是 PASS） |
+| `project/` | /research-implement |
+| `plan_res.md` | /research-plan |
+| `iterations/judge_v*.md` | /research-review（最后一份 verdict 必须是 PASS） |
 
 **验证 PASS：** 读取最新的 `judge_v*.md`，确认 `verdict: PASS`。如果不是，STOP。
 
@@ -31,8 +30,8 @@ metadata:
 
 | File | Content |
 |------|---------|
-| `$W/experiment_res.md` | 完整实验报告（含 full training + 消融 + 补充实验） |
-| `$W/experiment_analysis/analysis_{N}.md` | 每轮实验分析报告（迭代过程中产生） |
+| `experiment_res.md` | 完整实验报告（含 full training + 消融 + 补充实验） |
+| `experiment_analysis/analysis_{N}.md` | 每轮实验分析报告（迭代过程中产生） |
 
 ---
 
@@ -43,7 +42,7 @@ metadata:
 修改 epoch 数为 plan_res.md 中指定的正式值。**不要改代码逻辑，只改 epoch。**
 
 ```bash
-cd $W/project && source .venv/bin/activate
+cd project && source .venv/bin/activate
 python3 run.py  # full epochs
 ```
 
@@ -78,7 +77,7 @@ python3 run.py --epochs 2 --ablation no_attention
 
 #### 4.1 分析当前结果
 
-读取当前所有实验结果（full training + 消融），写入分析报告 `$W/experiment_analysis/analysis_{N}.md`：
+读取当前所有实验结果（full training + 消融），写入分析报告 `experiment_analysis/analysis_{N}.md`：
 
 ```markdown
 # Experiment Analysis Round {N}
@@ -108,7 +107,7 @@ python3 run.py --epochs 2 --ablation no_attention
 根据分析报告中的计划，修改代码并执行补充实验。**只改实验相关参数/配置，不改核心算法逻辑。**
 
 ```bash
-cd $W/project && source .venv/bin/activate
+cd project && source .venv/bin/activate
 python3 run.py --experiment {exp_name}
 ```
 
@@ -118,7 +117,7 @@ python3 run.py --experiment {exp_name}
 
 ### Step 5: 写入最终实验报告
 
-汇总所有实验结果（full training + 消融 + 2 轮补充实验），写入 `$W/experiment_res.md`：
+汇总所有实验结果（full training + 消融 + 2 轮补充实验），写入 `experiment_res.md`：
 
 ```markdown
 # Experiment Report
@@ -158,8 +157,8 @@ python3 run.py --experiment {exp_name}
 | {Baseline} | {value} | ... |
 
 ### Visualizations
-- 训练曲线: `$W/project/figures/training_curve.png`
-- {其他可视化}: `$W/project/figures/{name}.png`
+- 训练曲线: `project/figures/training_curve.png`
+- {其他可视化}: `project/figures/{name}.png`
 
 ## Conclusions
 - {key findings from all experiments}

@@ -1,6 +1,6 @@
 # Idea Template
 
-Use this template for each generated idea (`$WORKSPACE/ideas/idea_N.md`).
+Use this template for each generated idea (`ideas/idea_N.md`).
 
 ## Required Sections
 

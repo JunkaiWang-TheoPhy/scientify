@@ -15,15 +15,14 @@ metadata:
 
 **Don't ask permission. Just do it.**
 
-**Workspace:** `$W` = working directory provided in task parameter.
 
 ## Prerequisites
 
 | File | Source |
 |------|--------|
-| `$W/plan_res.md` | /research-plan |
-| `$W/survey_res.md` | /research-survey |
-| `$W/repos/` (optional) | reference code |
+| `plan_res.md` | /research-plan |
+| `survey_res.md` | /research-survey |
+| `repos/` (optional) | reference code |
 
 **If `plan_res.md` is missing, STOP:** "需要先运行 /research-plan 完成实现计划"
 
@@ -31,8 +30,8 @@ metadata:
 
 | File | Content |
 |------|---------|
-| `$W/project/` | 完整可运行代码 |
-| `$W/ml_res.md` | 实现报告（含真实执行结果） |
+| `project/` | 完整可运行代码 |
+| `ml_res.md` | 实现报告（含真实执行结果） |
 
 ---
 
@@ -40,7 +39,7 @@ metadata:
 
 ### Step 1: 读取计划
 
-读取 `$W/plan_res.md`，提取：
+读取 `plan_res.md`，提取：
 - 所有组件列表
 - 数据集信息
 - 训练参数
@@ -48,7 +47,7 @@ metadata:
 ### Step 2: 创建项目结构
 
 ```
-$W/project/
+project/
   model/          # 模型组件（每个组件一个文件）
   data/           # 数据加载
   training/       # 训练循环 + loss
@@ -66,7 +65,7 @@ $W/project/
 
 **3b. 数据管道**
 ```bash
-cd $W/project && uv venv .venv && source .venv/bin/activate
+cd project && uv venv .venv && source .venv/bin/activate
 uv pip install -r requirements.txt
 python3 -c "from data.dataset import *; print('data OK')"
 ```
@@ -93,7 +92,7 @@ print(f"[RESULT] device={device}")
 ### Step 4: 环境搭建 + 执行
 
 ```bash
-cd $W/project
+cd project
 uv venv .venv
 source .venv/bin/activate
 
@@ -125,7 +124,7 @@ python3 run.py --epochs 2
 
 ### Step 6: 写入报告
 
-写入 `$W/ml_res.md`：
+写入 `ml_res.md`：
 
 ```markdown
 # Implementation Report

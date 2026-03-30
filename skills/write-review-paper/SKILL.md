@@ -16,18 +16,18 @@ metadata:
 
 Guide for writing a structured literature review or survey paper from papers you've already collected. This skill helps with reading strategy, note organization, and academic writing.
 
-**Workspace:** `$W` = working directory provided in task parameter. Outputs go to `$W/review/`.
+Outputs go to `review/`.
 
 ## Prerequisites
 
 Before starting, ensure you have:
-1. Papers collected in `$W/papers/`
-2. Ideally, clustering done by `/research-collect` in `$W/survey/clusters.json`
+1. Papers collected in `papers/`
+2. Ideally, knowledge base built in `knowledge/`
 
 Check workspace:
 ```bash
-ls $W/papers/
-ls $W/survey/ 2>/dev/null
+ls papers/
+ls knowledge/ 2>/dev/null
 ```
 
 ---
@@ -44,7 +44,7 @@ Based on clusters from survey, prioritize reading:
 | P2 (重要) | 主要方法论、重要实验结果 | 读摘要+方法+实验 |
 | P3 (参考) | 辅助材料、边缘相关 | 仅读摘要 |
 
-Create `$W/review/reading_plan.md`:
+Create `review/reading_plan.md`:
 
 ```markdown
 # Reading Plan
@@ -62,7 +62,7 @@ Create `$W/review/reading_plan.md`:
 
 ### 1.2 Reading Notes Template
 
-For each paper, create `$W/review/notes/{paper_id}.md` using template in `references/note-template.md`.
+For each paper, create `review/notes/{paper_id}.md` using template in `references/note-template.md`.
 
 ---
 
@@ -70,7 +70,7 @@ For each paper, create `$W/review/notes/{paper_id}.md` using template in `refere
 
 ### 2.1 Build Comparison Table
 
-Create `$W/review/comparison.md`:
+Create `review/comparison.md`:
 
 ```markdown
 # Method Comparison
@@ -83,7 +83,7 @@ Create `$W/review/comparison.md`:
 
 ### 2.2 Timeline Analysis
 
-Create `$W/review/timeline.md`:
+Create `review/timeline.md`:
 
 ```markdown
 # Research Timeline
@@ -106,7 +106,7 @@ Create `$W/review/timeline.md`:
 
 ### 2.3 Taxonomy Design
 
-Create `$W/review/taxonomy.md`:
+Create `review/taxonomy.md`:
 
 ```markdown
 # Taxonomy of Approaches
@@ -140,7 +140,7 @@ Create `$W/review/taxonomy.md`:
 
 ### 3.1 Survey Paper Template
 
-Create `$W/review/draft.md` using template in `references/survey-template.md`.
+Create `review/draft.md` using template in `references/survey-template.md`.
 
 Key sections: Abstract → Introduction → Background → Taxonomy → Comparison → Datasets → Future Directions → Conclusion
 
@@ -198,7 +198,7 @@ For a thesis chapter:
 ## Output Files
 
 ```
-$W/review/
+review/
 ├── reading_plan.md       # 阅读计划
 ├── notes/                # 阅读笔记
 │   ├── {paper_id}.md

@@ -32,11 +32,20 @@ Use this for any mix of:
 - `README.md`
 - `docs/index.html`
 
+Review the artifact set in one or more of these modes:
+
+- `paper review`
+  - checks claim scope, evidence binding, baseline wording, and abstract/results discipline
+- `figure review`
+  - checks units, legends, captions, readability, and evidence labels
+- `release page review`
+  - checks first-screen clarity, artifact entry points, and scope-boundary wording
+
 ## Workflow
 
 ### Step 1: Inventory the Artifact Set
 
-List the files being reviewed and the headline claims they appear to make.
+List the files being reviewed, the headline claims they appear to make, the source artifact path for each headline claim when available, and which review mode applies to each file (`paper review`, `figure review`, or `release page review`).
 
 ### Step 2: Review Findings First
 
@@ -50,6 +59,8 @@ Each finding must include:
 
 - the problem
 - the affected file(s)
+- the `evidence_path` (`N/A` if the issue is structural rather than evidence-bound)
+- the `affected_claim_id` (`N/A` if the issue is not tied to a specific claim)
 - why it matters
 - the concrete fix
 
@@ -58,6 +69,19 @@ Also write a top-level line:
 ```text
 release_verdict: HOLD | CONDITIONAL_GO | GO
 ```
+
+Use these verdict rules:
+
+- `HOLD`
+  - any `P0` finding exists
+  - a headline metric has no baseline, no protocol/guardrail, or no source artifact
+  - simulator/proxy evidence is written as runtime evidence
+- `CONDITIONAL_GO`
+  - no `P0` findings exist, but one or more unresolved `P1` findings remain
+- `GO`
+  - no `P0` findings remain
+  - no unresolved `P1` finding weakens a headline claim
+  - every headline claim can be traced to a concrete source artifact
 
 ### Step 3: Check Release Readiness
 

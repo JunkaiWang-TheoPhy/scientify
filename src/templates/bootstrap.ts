@@ -21,7 +21,24 @@ export function renderBootstrapMd(projectName: string): string {
    - 生成 config.json（参考下方模板）
 5. 询问用户是否立即执行 Day 0（构建初始知识状态）
    - 如果是，执行 /metabolism 完成首轮文献检索和知识库构建（Day 0 模式）
-6. 删除本文件（BOOTSTRAP.md）
+6. 如果用户已经有部分产物，优先走最短路径，不要默认从 Day 0 重头开始：
+   - 已有 papers/ -> /research-survey
+   - 已有 survey_res.md，但路线还没定 -> /algorithm-selection
+   - 已有 survey_res.md -> /research-plan
+   - 已有 plan_res.md，需要先审数据质量 -> /dataset-validate
+   - 已有 plan_res.md，且需要真实对比方法 -> /baseline-runner
+   - 已有实现代码 -> /research-review
+   - 已有 review PASS -> /research-experiment
+7. 在完成首次配置后，告诉用户下一步推荐命令和预期输出文件，再删除本文件（BOOTSTRAP.md）
+
+## 常见入口
+
+- 我只有一个研究方向，没有材料 -> 先完成配置，再运行 /metabolism
+- 我已经有一批论文 -> 直接运行 /research-survey
+- 我已经做完 survey，但还没决定模型路线 -> 运行 /algorithm-selection
+- 我已经有 plan，想先确认数据没问题 -> 运行 /dataset-validate
+- 我已经有 plan，想先把 baseline 跑出来 -> 运行 /baseline-runner
+- 我已经有实现代码 -> 运行 /research-review
 
 ## config.json 模板
 
@@ -131,11 +148,26 @@ $W/
 | /metabolism | Day 0: config.json, knowledge/ / Day 1+: papers/, knowledge/, ideas/hyp-*.md, log/ |
 | /research-collect | papers/ |
 | /research-survey | knowledge/, survey_res.md |
+| /algorithm-selection | selection_res.md |
 | /research-plan | plan_res.md |
+| /dataset-validate | data_validation.md |
+| /baseline-runner | baseline_res.md, experiments/baselines/ |
 | /research-implement | experiments/ |
 | /research-review | experiments/review/ |
 | /research-experiment | experiments/results/ |
 | /idea-generation | ideas/ |
 | /write-review-paper | review/ |
+
+## Common ML Midstream Paths
+
+- Survey exists but route choice is still unclear:
+  - run \`/algorithm-selection\`
+  - expected output: \`selection_res.md\`
+- Plan exists and the project needs a dedicated data-quality check:
+  - run \`/dataset-validate\`
+  - expected output: \`data_validation.md\`
+- Plan exists and the project needs honest comparison numbers:
+  - run \`/baseline-runner\`
+  - expected outputs: \`baseline_res.md\`, optional baseline artifacts under \`experiments/baselines/\`
 `;
 }

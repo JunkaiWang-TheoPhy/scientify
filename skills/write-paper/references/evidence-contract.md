@@ -17,7 +17,9 @@ Every headline claim should be recorded using this structure before drafting pro
   allowed_in_sections:
     - "abstract"
     - "results"
-    - "limitations"
+    - "discussion"
+    - "conclusion"
+    - "boundary_note"
 ```
 
 Required fields:

@@ -25,7 +25,7 @@ You were just created as the research agent for project "${projectName}". Comple
    - existing \`experiment_res.md\` plus figures -> \`/write-paper\`
    - existing \`paper/draft.md\` -> \`/artifact-review\`
    - existing figures with inconsistent captions or style -> \`/figure-standardize\`
-   - preparing \`README.md\` or release-facing docs -> \`/release-layout\`
+   - preparing \`README.md\` or release-facing docs -> \`/release-layout\` after a fresh release gate exists
 7. Delete this file (\`BOOTSTRAP.md\`) after the setup is complete.
 
 ## config.json Template
@@ -94,6 +94,13 @@ $W/
 │
 ├── review/                      # review, audit, and writing outputs
 ├── paper/                       # experiment-driven paper outputs
+│   ├── manuscript.tex           # top-level LaTeX entry
+│   ├── build_paper.sh           # PDF build script
+│   ├── references.bib           # bibliography placeholder
+│   ├── sections/                # section-by-section TeX drafts
+│   ├── figures/                 # paper-local figures
+│   ├── assets/                  # supporting assets for paper generation
+│   └── build/                   # PDF, logs, and build errors
 │
 ├── log/                         # run logs
 │   └── {YYYY-MM-DD}.md
@@ -145,8 +152,8 @@ Do not modify output files once written unless the user explicitly asks you to. 
 | /research-experiment | experiments/results/, experiment_res.md |
 | /idea-generation | ideas/ |
 | /write-review-paper | review/ |
-| /write-paper | paper/claim_inventory.md, paper/figures_manifest.md, paper/draft.md, paper/limitations.md |
-| /artifact-review | review/artifact_review.md, review/release_checklist.md |
+| /write-paper | paper/claim_inventory.md, paper/figures_manifest.md, paper/draft.md, paper/manuscript.tex, paper/build/manuscript.pdf |
+| /artifact-review | review/artifact_review.md, review/release_checklist.md, review/release_gate.json |
 | /figure-standardize | reports/figures/figure_spec.md or project/figures/figure_spec.md |
 | /release-layout | README.md, docs/index.html, release-facing pages |
 
@@ -156,15 +163,16 @@ Use these entry points when the project already has partial outputs and does not
 
 - If you already have \`experiment_res.md\` and one or more result figures:
   - run \`/write-paper\`
-  - expected outputs: \`paper/claim_inventory.md\`, \`paper/figures_manifest.md\`, \`paper/draft.md\`, \`paper/limitations.md\`
+  - expected outputs: \`paper/claim_inventory.md\`, \`paper/figures_manifest.md\`, \`paper/draft.md\`, \`paper/manuscript.tex\`, \`paper/build/manuscript.pdf\`
 - If you already have \`paper/draft.md\` or another draft artifact that is about to be shared:
   - run \`/artifact-review\`
-  - expected outputs: \`review/artifact_review.md\`, \`review/release_checklist.md\`
+  - expected outputs: \`review/artifact_review.md\`, \`review/release_checklist.md\`, \`review/release_gate.json\`
 - If you already have figures but their style, captioning, units, or evidence labels are inconsistent:
   - run \`/figure-standardize\`
   - expected outputs: figure specs, caption updates, and standardized release-facing figures
 - If you are preparing a \`README.md\` or release-facing page for sharing:
   - run \`/release-layout\`
   - expected outputs: README updates, docs landing-page updates, and clearer release entry surfaces
+  - do this only after \`/artifact-review\` has produced a fresh release gate for the current artifacts
 `;
 }

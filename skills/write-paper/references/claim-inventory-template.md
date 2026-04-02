@@ -17,7 +17,9 @@ Use this structure for `paper/claim_inventory.md` before drafting any prose:
   allowed_in_sections:
     - "abstract"
     - "results"
-    - "limitations"
+    - "discussion"
+    - "conclusion"
+    - "boundary_note"
 ```
 
 Authoring notes:

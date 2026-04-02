@@ -25,6 +25,7 @@ Use this skill to turn one-off Scientify charts into release-ready figures.
 3. A figure spec file:
    - prefer `reports/figures/figure_spec.md`
    - otherwise `project/figures/figure_spec.md`
+4. `paper/figures_manifest.md` when the figure family is paper-facing or a `paper/` workspace already exists
 
 ## Workflow
 
@@ -51,8 +52,14 @@ Normalize the full family, not just one chart:
 - line widths / marker sizes
 - caption structure
 - protocol note wording
+- callout wording
+- paper placement intent
 
-Use the palette and caption contract in `references/figure-style-guide.md` and `references/caption-template.md`.
+Use:
+
+- `references/figure-style-guide.md`
+- `references/caption-template.md`
+- `references/figure-placement-template.md`
 
 ### Step 3: Write the Figure Spec
 
@@ -65,6 +72,26 @@ Create or update `figure_spec.md` with one section per figure:
 - quality guard / evaluation constraint
 - simulator/runtime note
 - intended takeaway
+
+If the figure is used in a paper or paper-facing report, also create or update the matching entry in `paper/figures_manifest.md` with:
+
+- `figure_id`
+- `file_path`
+- `latex_label`
+- `section`
+- `placement_hint`
+- `caption_short`
+- `caption_long`
+- `takeaway_sentence`
+- `callout_sentence`
+- `baseline`
+- `evidence_type`
+- `source_metrics`
+- `source_files`
+- `supports_claim_ids`
+- `must_appear_before_claim_ids`
+
+Keep `figure_spec.md` and `paper/figures_manifest.md` aligned. The spec is the release-facing summary; the manifest is the paper-facing contract.
 
 ### Step 4: Re-render and Verify
 
@@ -79,3 +106,5 @@ Keep filenames stable unless the user explicitly asked for a new release bundle.
 3. If a result comes from simulator or proxy evaluation, state that in the caption or protocol note.
 4. Do not hide failing or quality-guard-breaking baselines; mark them clearly.
 5. Do not change the scientific claim. This skill improves packaging, not evidence.
+6. If a figure is paper-facing, produce both a long caption and a first-use callout sentence.
+7. If a figure supports a claim, the manifest must name that claim in `supports_claim_ids`.

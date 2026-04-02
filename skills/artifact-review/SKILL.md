@@ -20,12 +20,14 @@ This is a release-readiness review skill. It does **not** invent new claims or r
 
 - `review/artifact_review.md`
 - `review/release_checklist.md`
+- `review/release_gate.json`
 
 ## Review Scope
 
 Use this for any mix of:
 
 - `paper/draft.md`
+- `paper/figures_manifest.md`
 - `review/draft.md`
 - `experiment_res.md`
 - figure bundles
@@ -40,12 +42,14 @@ Review the artifact set in one or more of these modes:
   - checks units, legends, captions, readability, and evidence labels
 - `release page review`
   - checks first-screen clarity, artifact entry points, and scope-boundary wording
+- `style review`
+  - checks paragraph discipline, quantitative grounding, adjective inflation, and result-vs-interpretation separation
 
 ## Workflow
 
 ### Step 1: Inventory the Artifact Set
 
-List the files being reviewed, the headline claims they appear to make, the source artifact path for each headline claim when available, and which review mode applies to each file (`paper review`, `figure review`, or `release page review`).
+List the files being reviewed, the headline claims they appear to make, the source artifact path for each headline claim when available, which figures or tables support them, and which review mode applies to each file (`paper review`, `figure review`, `release page review`, or `style review`).
 
 ### Step 2: Review Findings First
 
@@ -87,6 +91,35 @@ Use these verdict rules:
 
 Write `release_checklist.md` using the checklist in `references/review-checklist.md`.
 
+If `style review` applies, also use `references/style-review-checklist.md`.
+Then write `review/release_gate.json` using `references/release-gate-template.md`.
+
+If a paper-facing figure set exists, explicitly check the figure-text contract across:
+
+- `paper/claim_inventory.md`
+- `paper/figures_manifest.md`
+- the first prose callout
+- the figure caption
+- the LaTeX or Markdown figure block
+
+`release_gate.json` should include:
+
+- `release_verdict`
+- `generated_at`
+- `review_scope`
+- `blocking_findings`
+- `p1_findings`
+- `checked_files`
+- `stale_if_any_newer_than`
+
+Use `stale_if_any_newer_than` to list the release-facing artifacts that would invalidate the current gate if they change later, for example:
+
+- `paper/draft.md`
+- `paper/claim_inventory.md`
+- `paper/figures_manifest.md`
+- `README.md`
+- `docs/index.html`
+
 ## Required Checks
 
 1. Every headline metric has a baseline, protocol/guardrail, and source artifact.
@@ -98,9 +131,16 @@ Write `release_checklist.md` using the checklist in `references/review-checklist
    - what artifacts exist
    - what the scope boundary is
 5. Unsupported claims are downgraded or explicitly marked as open.
+6. Results paragraphs are quantitative and baseline-anchored.
+7. Conclusion and abstract do not introduce claims that exceed the allowed confidence or section scope.
+8. Every headline claim has a matching figure, table, or explicit text-only justification.
+9. Every paper-facing figure has `supports_claim_ids`, a usable `callout_sentence`, and a caption that names baseline, metric, evidence type, and protocol when relevant.
+10. Figures are introduced before or adjacent to the claims they are supposed to support.
+11. `review/release_gate.json` matches the current verdict and names the files that would make the gate stale if changed later.
 
 ## Safety Rules
 
 1. If the evidence trail is broken, flag it. Do not repair it with guesswork.
 2. Prefer short, specific findings over generic writing advice.
 3. Review the artifact that exists, not the artifact you wish existed.
+4. If a sentence sounds impressive but is not measurable, downgrade it or flag it.

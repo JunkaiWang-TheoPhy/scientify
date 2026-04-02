@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
+import { formatReleaseGateStatus, getReleaseGateNextStep, hasReleaseFacingArtifacts, readReleaseGateStatus } from "./release-gate.js";
 import type { PluginCommandContext, PluginCommandResult } from "./types.js";
 
 const OPENCLAW_HOME = path.join(os.homedir(), ".openclaw");
@@ -67,7 +68,19 @@ export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandR
 
     output += `**${projectId}** (Day ${currentDay})\n`;
     output += `  Workspace: \`${w}\`\n`;
-    output += `  Topics: ${topicCount} | Hypotheses: ${hypothesisCount} | Papers: ${papersCount} | Ideas: ${ideasCount}\n\n`;
+    output += `  Topics: ${topicCount} | Hypotheses: ${hypothesisCount} | Papers: ${papersCount} | Ideas: ${ideasCount}\n`;
+    const gateStatus = readReleaseGateStatus(w);
+    if (hasReleaseFacingArtifacts(w) || gateStatus.state !== "missing") {
+      output += `  Release Gate: ${formatReleaseGateStatus(gateStatus)}\n`;
+      if (gateStatus.state === "stale" && gateStatus.staleReasons.length > 0) {
+        output += `  Gate Detail: ${gateStatus.staleReasons[0]}\n`;
+      }
+      const nextStep = getReleaseGateNextStep(w, gateStatus);
+      if (nextStep) {
+        output += `  Next: ${nextStep}\n`;
+      }
+    }
+    output += `\n`;
   }
 
   return { text: output };

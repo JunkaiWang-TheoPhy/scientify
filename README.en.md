@@ -230,6 +230,18 @@ Or invoke a specific skill directly with a slash command:
 /dataset-validate
 ```
 
+## New Skills for Midstream ML Work
+
+- `/algorithm-selection`
+  - use this after `/research-survey` and before `/research-plan`
+  - purpose: make 2-3 candidate routes explicit and record `Chosen Route / Rejected Routes / Fallback Route`
+- `/dataset-validate`
+  - use this when `plan_res.md` already exists and you want to validate data quality before implementation or model review
+  - purpose: review data reality, splits, labels, leakage risk, and mock-data usage separately from model quality
+- `/baseline-runner`
+  - use this when `plan_res.md` already exists and the project needs real baseline comparisons
+  - purpose: standardize baselines, protocol, metrics, and result recording, then write `baseline_res.md`
+
 ### 3. Monitor sub-agent progress
 
 When the orchestrator spawns sub-agents, you'll see:

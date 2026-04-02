@@ -87,6 +87,9 @@ $W/
 │   ├── requirements.txt
 │   └── results/                 # 实验结果
 │
+├── review/                      # review, audit, and writing outputs
+├── paper/                       # experiment-driven paper outputs
+│
 ├── log/                         # 运行日志
 │   └── {YYYY-MM-DD}.md
 │
@@ -134,8 +137,12 @@ $W/
 | /research-plan | plan_res.md |
 | /research-implement | experiments/ |
 | /research-review | experiments/review/ |
-| /research-experiment | experiments/results/ |
+| /research-experiment | experiments/results/, experiment_res.md |
 | /idea-generation | ideas/ |
 | /write-review-paper | review/ |
+| /write-paper | paper/claim_inventory.md, paper/figures_manifest.md, paper/draft.md, paper/limitations.md |
+| /artifact-review | review/artifact_review.md, review/release_checklist.md |
+| /figure-standardize | reports/figures/figure_spec.md or project/figures/figure_spec.md |
+| /release-layout | README.md, docs/index.html, release-facing pages |
 `;
 }

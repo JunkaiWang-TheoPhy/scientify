@@ -30,7 +30,7 @@ metadata:
 
 | File | Content |
 |------|---------|
-| `experiment_res.md` | 完整实验报告（含 full training + 消融 + 补充实验） |
+| `experiment_res.md` | Full experiment report (full training, ablations, supplementary experiments) with explicit headline metrics, baselines, guardrails, and figure anchors |
 | `experiment_analysis/analysis_{N}.md` | 每轮实验分析报告（迭代过程中产生） |
 
 ---
@@ -128,6 +128,9 @@ python3 run.py --experiment {exp_name}
 - [RESULT] val_metric={value}
 - [RESULT] elapsed={value}
 - [RESULT] device={device}
+- [METRIC] name={headline_metric} value={value} unit={unit} baseline={baseline}
+- [GUARD] name={guard_name} value={value} threshold={threshold} pass={true/false}
+- [FIGURE] file={figure path}
 
 > 以上数值来自真实执行输出。
 
@@ -156,6 +159,11 @@ python3 run.py --experiment {exp_name}
 | Ours | {value} | — |
 | {Baseline} | {value} | ... |
 
+## Scope / Evidence Boundary
+- baseline: {which baseline is used}
+- protocol / guardrail: {evaluation rule}
+- evidence_type: {simulator / local_runtime / full_runtime}
+
 ### Visualizations
 - 训练曲线: `project/figures/training_curve.png`
 - {其他可视化}: `project/figures/{name}.png`
@@ -177,3 +185,4 @@ python3 run.py --experiment {exp_name}
 4. 如果 full training 失败（OOM 等），调整 batch_size 后重试，不要跳过
 5. **补充实验迭代必须做 2 轮（Novix Exp Analyzer 机制）** — 第 1 轮针对初始结果，第 2 轮针对补充实验结果
 6. 补充实验不改核心算法，只改实验配置/参数/可视化代码
+7. Every headline metric must include a baseline, and every main conclusion must point back to real outputs or figure files

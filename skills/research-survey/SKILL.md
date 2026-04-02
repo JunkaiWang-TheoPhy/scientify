@@ -28,8 +28,8 @@ Read and verify these files exist before starting:
 
 | File | Content |
 |------|---------|
-| `knowledge/paper_{id}.md` | Per-paper structured notes |
-| `survey_res.md` | Synthesis report |
+| `knowledge/paper_{id}.md` | Per-paper structured notes with frontmatter, formulas, and code mapping |
+| `survey_res.md` | Synthesis report with method comparison, scope boundary, and concrete next-step suggestions |
 
 ---
 
@@ -79,6 +79,15 @@ ls papers/
 写入 `knowledge/paper_{id}.md`：
 
 ```markdown
+---
+paper_id: "{arxiv_id}"
+title: "{Paper Title}"
+evidence_level: "full_text"
+method_family: "{method family}"
+key_formula_count: 1
+code_mapping_count: 1
+---
+
 # {Paper Title}
 
 - **arXiv:** {arxiv_id}
@@ -121,6 +130,12 @@ $$
 |------|------|----------|--------|------|
 | ... | ... | ... | ... | ... |
 
+## Scope Boundary
+
+- Preconditions: {what conditions this method relies on}
+- Not recommended when: {where this method should not be directly applied}
+- Evidence strength: {full text / PDF / metadata}
+
 ## 技术路线建议
 
 基于以上分析，推荐的技术路线是：
@@ -151,3 +166,5 @@ $$
 2. 每篇笔记必须包含至少 1 个数学公式
 3. 如果有 repos/，必须尝试找到公式到代码的映射
 4. survey_res.md 必须包含方法对比表
+5. survey_res.md must include a scope-boundary section and concrete guidance for the current project
+6. Before writing the final synthesis, write at least 2 real paper notes to disk

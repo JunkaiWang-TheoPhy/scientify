@@ -36,7 +36,7 @@ Outputs go to the workspace root.
 - `survey_res.md`
 - `project/` when the current project already has runnable code
 
-If `plan_res.md` is missing, stop and say: `需要先运行 /research-plan 完成实现计划`.
+If `plan_res.md` is missing, stop and say: `Run /research-plan first to complete the implementation plan.`
 
 ## Required Outputs
 

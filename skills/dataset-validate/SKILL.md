@@ -36,7 +36,7 @@ Outputs go to the workspace root.
 - `project/` if a data pipeline already exists
 - `survey_res.md` when it defines dataset or protocol expectations
 
-If `plan_res.md` is missing, stop and say: `需要先运行 /research-plan 完成实现计划`.
+If `plan_res.md` is missing, stop and say: `Run /research-plan first to complete the implementation plan.`
 
 ## Required Output
 

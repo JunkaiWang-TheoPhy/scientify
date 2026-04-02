@@ -71,7 +71,7 @@ function addCronJob(agentId: string): void {
     payload: {
       kind: "agentTurn",
       agentId,
-      message: "执行每日知识新陈代谢。阅读 AGENTS.md 了解工作流，然后使用 /metabolism 技能完成今日代谢。",
+      message: "Run daily knowledge metabolism. Read AGENTS.md for the workflow, then use the /metabolism skill to complete today's cycle.",
     },
     delivery: { mode: "announce" },
     enabled: true,

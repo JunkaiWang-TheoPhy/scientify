@@ -108,9 +108,9 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
   if (!snapshot.hasConfig) {
     return {
       stage: "Bootstrap pending",
-      command: "完成 BOOTSTRAP 配置",
+      command: "complete BOOTSTRAP configuration",
       expectedOutputs: ["config.json", "SOUL.md"],
-      reason: "项目还没有基础配置，后续 survey、selection 和 experiment 没有统一方向依据。",
+      reason: "The project is missing its base configuration, so later survey, selection, and experiment steps do not yet share a stable direction.",
     };
   }
 
@@ -119,7 +119,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Survey needed",
       command: "/research-survey",
       expectedOutputs: ["knowledge/", "survey_res.md"],
-      reason: "当前还没有深度调研结果，无法可靠进入路线选择和实现。",
+      reason: "There is no deep survey result yet, so route selection and implementation would be premature.",
     };
   }
 
@@ -128,7 +128,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Route selection",
       command: "/algorithm-selection",
       expectedOutputs: ["selection_res.md"],
-      reason: "已经有 survey，但还没有把候选路线收敛成 Chosen / Rejected / Fallback。",
+      reason: "A survey exists, but the project has not yet narrowed candidate approaches into Chosen / Rejected / Fallback routes.",
     };
   }
 
@@ -137,7 +137,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Planning",
       command: "/research-plan",
       expectedOutputs: ["plan_res.md"],
-      reason: "还缺 Dataset / Model / Training / Testing 四部分计划。",
+      reason: "The project still needs a concrete Dataset / Model / Training / Testing plan before implementation.",
     };
   }
 
@@ -146,7 +146,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Dataset validation",
       command: "/dataset-validate",
       expectedOutputs: ["data_validation.md"],
-      reason: "先把数据真实性、split、label 和 leakage 风险单独审清楚，再做模型质量判断。",
+      reason: "Data reality, splits, labels, and leakage risk should be reviewed separately before judging model quality.",
     };
   }
 
@@ -155,7 +155,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Baseline setup",
       command: "/baseline-runner",
       expectedOutputs: ["baseline_res.md", "experiments/baselines/"],
-      reason: "当前还缺统一协议下的 baseline 结果，不适合直接写 headline comparison。",
+      reason: "The project still lacks baseline results under a matched protocol, so headline comparisons would be too early.",
     };
   }
 
@@ -164,7 +164,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Implementation",
       command: "/research-implement",
       expectedOutputs: ["project/", "ml_res.md"],
-      reason: "路线、计划、数据检查和 baseline 契约都已经具备，下一步应进入实现和 2 epoch 验证。",
+      reason: "The route, plan, data check, and baseline contract are already in place, so the next step is implementation plus 2-epoch validation.",
     };
   }
 
@@ -173,7 +173,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Review",
       command: "/research-review",
       expectedOutputs: ["iterations/judge_v{N}.md"],
-      reason: "实现已经存在，但还没有拿到 review PASS，模型质量还需要单独审。",
+      reason: "Implementation exists, but review has not yet reached PASS, so model quality still needs a dedicated review pass.",
     };
   }
 
@@ -182,7 +182,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
       stage: "Full experiment",
       command: "/research-experiment",
       expectedOutputs: ["experiment_res.md", "experiment_analysis/"],
-      reason: "实现和 review 已通过，下一步应补 full training、ablation 和补充实验。",
+      reason: "Implementation and review are ready, so the next step is full training, ablations, and supplementary experiments.",
     };
   }
 
@@ -190,7 +190,7 @@ function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
     stage: "Experiment complete",
     command: "/write-review-paper",
     expectedOutputs: ["review/"],
-    reason: "核心机器学习主链已经跑完，可以进入总结、综述或对外整理阶段。",
+    reason: "The core ML execution chain is complete, so the project can move into synthesis, survey writing, or outward-facing summaries.",
   };
 }
 

@@ -35,7 +35,7 @@ Outputs go to the workspace root.
 - `survey_res.md`
 - `knowledge/paper_*.md` when available
 
-If `survey_res.md` is missing, stop and say: `需要先运行 /research-survey 完成深度分析`.
+If `survey_res.md` is missing, stop and say: `Run /research-survey first to complete the deep analysis.`
 
 ## Required Output
 

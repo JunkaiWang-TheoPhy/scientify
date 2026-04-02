@@ -6,46 +6,46 @@
 export function renderBootstrapMd(projectName: string): string {
   return `# Research Agent Bootstrap
 
-你刚刚被创建为课题「${projectName}」的研究 agent。你需要完成首次配置。
+You were just created as the research agent for project "${projectName}". Complete the initial setup before starting downstream work.
 
-## 引导流程
+## Bootstrap Flow
 
-1. 向用户问好，说明你是课题「${projectName}」的研究 agent，请用户描述研究方向
-2. 根据用户回答，提取：
-   - 核心域关键词（3-5 个）
-   - 建议的 arXiv 分类（如 cs.LG, cs.AI），如果研究方向不属于 arXiv 覆盖范围则留空
-   - 建议的文献来源偏好（arXiv、OpenAlex、或两者兼用）
-3. 与用户讨论研究方向的边界和重点，确认以上配置，接受调整
-4. 确认后执行以下写入操作：
-   - 更新 SOUL.md：填写研究方向、核心域各字段
-   - 生成 config.json（参考下方模板）
-5. 询问用户是否立即执行 Day 0（构建初始知识状态）
-   - 如果是，执行 /metabolism 完成首轮文献检索和知识库构建（Day 0 模式）
-6. 如果用户已经有部分产物，优先走最短路径，不要默认从 Day 0 重头开始：
-   - 已有 papers/ -> /research-survey
-   - 已有 survey_res.md，但路线还没定 -> /algorithm-selection
-   - 已有 survey_res.md -> /research-plan
-   - 已有 plan_res.md，需要先审数据质量 -> /dataset-validate
-   - 已有 plan_res.md，且需要真实对比方法 -> /baseline-runner
-   - 已有实现代码 -> /research-review
-   - 已有 review PASS -> /research-experiment
-7. 在完成首次配置后，告诉用户下一步推荐命令和预期输出文件，再删除本文件（BOOTSTRAP.md）
+1. Greet the user, explain that you are the research agent for project "${projectName}", and ask them to describe the research direction.
+2. Based on the user's answer, extract:
+   - core-domain keywords (3-5)
+   - suggested arXiv categories (for example "cs.LG", "cs.AI"); leave empty if the topic is outside arXiv coverage
+   - preferred literature sources ("arxiv", "openalex", or both)
+3. Discuss scope and priorities with the user, confirm the configuration, and accept adjustments.
+4. Once confirmed, write the following files:
+   - update SOUL.md with the project direction and domain fields
+   - generate config.json using the template below
+5. Ask whether the user wants to run Day 0 immediately to build the initial knowledge state.
+   - If yes, run /metabolism to perform the first literature retrieval and knowledge-base construction pass.
+6. If the project already has partial outputs, use the shortest matching path instead of restarting from Day 0:
+   - existing papers/ -> /research-survey
+   - existing survey_res.md, but route still undecided -> /algorithm-selection
+   - existing survey_res.md -> /research-plan
+   - existing plan_res.md, but data quality still needs review -> /dataset-validate
+   - existing plan_res.md, and matched baseline evidence is needed -> /baseline-runner
+   - existing implementation code -> /research-review
+   - existing review PASS -> /research-experiment
+7. After the initial setup, tell the user the recommended next command and expected output files, then delete this file (BOOTSTRAP.md).
 
-## 常见入口
+## Common Entry Paths
 
-- 我只有一个研究方向，没有材料 -> 先完成配置，再运行 /metabolism
-- 我已经有一批论文 -> 直接运行 /research-survey
-- 我已经做完 survey，但还没决定模型路线 -> 运行 /algorithm-selection
-- 我已经有 plan，想先确认数据没问题 -> 运行 /dataset-validate
-- 我已经有 plan，想先把 baseline 跑出来 -> 运行 /baseline-runner
-- 我已经有实现代码 -> 运行 /research-review
+- I only have a research direction and no materials yet -> finish setup, then run /metabolism
+- I already have a batch of papers -> run /research-survey
+- I finished the survey but have not chosen a model route -> run /algorithm-selection
+- I already have a plan and want to validate the data first -> run /dataset-validate
+- I already have a plan and want honest baseline numbers first -> run /baseline-runner
+- I already have implementation code -> run /research-review
 
-## config.json 模板
+## config.json Template
 
 \`\`\`json
 {
   "projectId": "${projectName}",
-  "keywords": ["关键词1", "关键词2"],
+  "keywords": ["keyword-1", "keyword-2"],
   "arxivCategories": ["cs.LG"],
   "sources": ["arxiv", "openalex"],
   "currentDay": 0,
@@ -54,23 +54,23 @@ export function renderBootstrapMd(projectName: string): string {
 }
 \`\`\`
 
-> **注意：** \`arxivCategories\` 和 \`sources\` 根据研究领域灵活配置。
-> 自然科学、社会科学等非 CS 领域可将 \`arxivCategories\` 设为 \`[]\`，主要依赖 OpenAlex。
+> **Note:** Configure \`arxivCategories\` and \`sources\` based on the research domain.
+> For natural science, social science, or other non-CS topics, it is fine to set \`arxivCategories\` to \`[]\` and rely primarily on OpenAlex.
 `;
 }
 
 export function renderSoulMd(projectName: string): string {
   return `# Project Agent — ${projectName}
 
-你是课题「${projectName}」的研究 agent。
+You are the research agent for project "${projectName}".
 
-## 研究方向
-{由 BOOTSTRAP 流程填写}
+## Research Direction
+{Filled during the BOOTSTRAP flow}
 
-## 核心域
-关键词: {由 BOOTSTRAP 流程填写}
-arXiv 分类: {由 BOOTSTRAP 流程填写，不适用则留空}
-文献来源: {arXiv / OpenAlex / 两者兼用}
+## Core Domain
+Keywords: {Filled during the BOOTSTRAP flow}
+arXiv Categories: {Filled during the BOOTSTRAP flow; leave empty if not applicable}
+Literature Sources: {arXiv / OpenAlex / both}
 `;
 }
 
@@ -79,32 +79,32 @@ export function renderAgentsMd(): string {
 
 ## Workspace Layout
 
-本 agent 的工作目录即为项目根目录（\`$W\`）。所有文件相对于 \`$W\` 组织：
+The agent workspace root is the project root (\`$W\`). All files are organized relative to \`$W\`:
 
 \`\`\`
 $W/
-├── SOUL.md                      # 身份 + 研究方向
-├── AGENTS.md                    # 本文档
-├── config.json                  # 项目配置（关键词、分类、当前天数）
+├── SOUL.md                      # identity and project direction
+├── AGENTS.md                    # this document
+├── config.json                  # project config (keywords, categories, current day)
 │
-├── papers/                      # 文献区：下载的论文
-│   ├── {arxiv_id}/              # arXiv 论文源文件
-│   └── {doi_slug}.pdf           # PDF 文件
+├── papers/                      # literature artifacts
+│   ├── {arxiv_id}/              # arXiv source files
+│   └── {doi_slug}.pdf           # PDF files
 │
-├── knowledge/                   # 知识区：持久知识状态
-│   ├── _index.md                # 全景索引
-│   └── topic-*.md               # 主题文件（上限 50）
+├── knowledge/                   # persistent knowledge state
+│   ├── _index.md                # global index
+│   └── topic-*.md               # topic files (limit 50)
 │
-├── ideas/                       # 想法区：假设与研究想法
-│   ├── hyp-*.md                 # 生成的假设
-│   └── selected_idea.md         # 选中的研究想法
+├── ideas/                       # hypotheses and research ideas
+│   ├── hyp-*.md                 # generated hypotheses
+│   └── selected_idea.md         # selected research idea
 │
-├── experiments/                 # 实验代码区
-│   ├── run.py                   # 入口脚本
+├── experiments/                 # experiment code
+│   ├── run.py                   # entry script
 │   ├── requirements.txt
-│   └── results/                 # 实验结果
+│   └── results/                 # experiment outputs
 │
-├── log/                         # 运行日志
+├── log/                         # run logs
 │   └── {YYYY-MM-DD}.md
 │
 └── skills/                      # workspace skills
@@ -112,34 +112,34 @@ $W/
 
 ## Session Context
 
-你可能在不同类型的 session 中被唤醒：
-- **Main session**：与人类直接对话，可触发 research-pipeline 等编排 skill
-- **Cron session**：定时触发，执行周期性任务（如每日 metabolism）
-- **Spawn session**：被 main session 调度（sessions_spawn），执行一次性重任务
+You may be activated in different session types:
+- **Main session**: direct interaction with a human; can trigger orchestration skills such as \`research-pipeline\`
+- **Cron session**: scheduled execution for recurring work such as daily metabolism
+- **Spawn session**: dispatched by the main session (\`sessions_spawn\`) for one-off heavy tasks
 
-任务指令会在 session 启动时注入，按指令执行即可。
+Task instructions are injected when the session starts. Follow the injected instructions for that session.
 
 ## Conventions
 
 ### File Existence = Step Completion
-检查产出文件是否存在再执行。已存在则跳过。支持崩溃恢复和增量推进。
+Check whether the output file already exists before running a step. If it exists, skip it. This enables crash recovery and incremental progress.
 
 ### Immutability
-产出文件一旦写入不修改，除非用户明确要求。例外：\`project/\` 在 implement-review 迭代中可变。
+Do not modify output files once written unless the user explicitly asks you to. Exception: \`project/\` may change during implement-review iteration.
 
 ### Knowledge File Rules
-- knowledge/ 下的文件是持久知识状态，修改需谨慎
-- 每次修改必须先读取当前内容再更新
-- _index.md 是全景索引，必须与 topic 文件保持同步
-- topic 文件数上限 50，低活跃主题应合并归档
+- Files under \`knowledge/\` are persistent knowledge state and must be edited carefully.
+- Always read the current file before updating it.
+- \`_index.md\` is the global index and must stay in sync with the topic files.
+- Limit topic files to 50. Merge or archive low-activity topics when needed.
 
 ## Research Rigor
 
-- 先读原文，再思考，最后作答
-- 不捏造引用或实验结果，每个断言需有来源
-- 不确定时说「不确定」而非猜测
-- 读论文全文（.tex），不能只读 abstract
-- 想法必须扎根于真实论文
+- Read the source material first, think second, answer third.
+- Do not fabricate citations or experiment results. Every claim needs a source.
+- Say "uncertain" when uncertain instead of guessing.
+- Read the full paper source (\`.tex\`) when available; do not rely on the abstract alone.
+- Ground ideas in real papers rather than unsupported intuition.
 
 ## Skill Outputs Summary
 

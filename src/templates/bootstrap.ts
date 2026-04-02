@@ -10,6 +10,7 @@ export function renderBootstrapMd(projectName: string): string {
 
 ## 引导流程
 
+<<<<<<< Updated upstream
 1. 向用户问好，说明你是课题「${projectName}」的研究 agent，请用户描述研究方向
 2. 根据用户回答，提取：
    - 核心域关键词（3-5 个）
@@ -22,6 +23,26 @@ export function renderBootstrapMd(projectName: string): string {
 5. 询问用户是否立即执行 Day 0（构建初始知识状态）
    - 如果是，执行 /metabolism 完成首轮文献检索和知识库构建（Day 0 模式）
 6. 删除本文件（BOOTSTRAP.md）
+=======
+1. Greet the user, explain that you are the research agent for project "${projectName}", and ask them to describe the research direction.
+2. Based on the user's answer, extract:
+   - core-domain keywords (3-5)
+   - suggested arXiv categories (for example \`cs.LG\`, \`cs.AI\`); leave empty if the topic is outside arXiv coverage
+   - preferred literature sources (\`arxiv\`, \`openalex\`, or both)
+3. Discuss scope and priorities with the user, confirm the configuration, and accept adjustments.
+4. Once confirmed, write the following files:
+   - update \`SOUL.md\` with the project direction and domain fields
+   - generate \`config.json\` using the template below
+   - create \`progress_status.json\` for the current goal, including overall goal, current focus, next step, total tasks, completed tasks, and 3-7 subtasks
+5. Ask whether the user wants to run Day 0 immediately to build the initial knowledge state.
+   - If yes, run \`/metabolism\` to perform the first literature retrieval and knowledge-base construction pass.
+6. If the project already has partial outputs, use the shortest matching path instead of restarting the full pipeline:
+   - existing \`experiment_res.md\` plus figures -> \`/write-paper\`
+   - existing \`paper/draft.md\` -> \`/artifact-review\`
+   - existing figures with inconsistent captions or style -> \`/figure-standardize\`
+   - preparing \`README.md\` or release-facing docs -> \`/release-layout\` after a fresh release gate exists
+7. Delete this file (\`BOOTSTRAP.md\`) after the setup is complete.
+>>>>>>> Stashed changes
 
 ## config.json 模板
 
@@ -66,9 +87,16 @@ export function renderAgentsMd(): string {
 
 \`\`\`
 $W/
+<<<<<<< Updated upstream
 ├── SOUL.md                      # 身份 + 研究方向
 ├── AGENTS.md                    # 本文档
 ├── config.json                  # 项目配置（关键词、分类、当前天数）
+=======
+├── SOUL.md                      # identity and project direction
+├── AGENTS.md                    # this document
+├── config.json                  # project config (keywords, categories, current day)
+├── progress_status.json         # agent-defined task progress for the current goal
+>>>>>>> Stashed changes
 │
 ├── papers/                      # 文献区：下载的论文
 │   ├── {arxiv_id}/              # arXiv 论文源文件
@@ -109,6 +137,12 @@ $W/
 
 ### Immutability
 产出文件一旦写入不修改，除非用户明确要求。例外：\`project/\` 在 implement-review 迭代中可变。
+
+### Progress Tracking
+- Do not assume every project follows the same fixed stages.
+- Define progress in \`progress_status.json\` based on the user's current goal.
+- Update \`progress_status.json\` whenever the total task, current focus, subtask states, or next step changes.
+- Recommended fields: \`overall_goal\`, \`current_focus\`, \`next_step\`, \`completed_tasks\`, \`total_tasks\`, \`subtasks\`.
 
 ### Knowledge File Rules
 - knowledge/ 下的文件是持久知识状态，修改需谨慎

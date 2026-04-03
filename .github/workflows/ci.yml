@@ -32,6 +32,32 @@ jobs:
       - name: Type check
         run: pnpm exec tsc --noEmit
 
+      - name: Verify packed plugin stays dependency-free
+        run: |
+          PACK_FILE="$(npm pack --silent)"
+          TMP_DIR="$(mktemp -d)"
+          tar -xzf "$PACK_FILE" -C "$TMP_DIR"
+
+          node - "$TMP_DIR/package/package.json" <<'EOF'
+          const fs = require("node:fs");
+          const manifestPath = process.argv[2];
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+
+          const deps = manifest.dependencies ?? {};
+          if (Object.keys(deps).length > 0) {
+            console.error("Packed plugin must not publish runtime dependencies.");
+            console.error(JSON.stringify(deps, null, 2));
+            process.exit(1);
+          }
+
+          const peerDeps = manifest.peerDependencies ?? {};
+          if (Object.keys(peerDeps).length > 0) {
+            console.error("Packed plugin must not publish peer dependencies.");
+            console.error(JSON.stringify(peerDeps, null, 2));
+            process.exit(1);
+          }
+          EOF
+
   release:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

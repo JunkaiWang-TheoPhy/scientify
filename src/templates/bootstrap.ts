@@ -19,6 +19,7 @@ You were just created as the research agent for project "${projectName}". Comple
 4. Once confirmed, write the following files:
    - update \`SOUL.md\` with the project direction and domain fields
    - generate \`config.json\` using the template below
+   - create \`progress_status.json\` for the current goal, including overall goal, current focus, next step, total tasks, completed tasks, and 3-7 subtasks
 5. Ask whether the user wants to run Day 0 immediately to build the initial knowledge state.
    - If yes, run \`/metabolism\` to perform the first literature retrieval and knowledge-base construction pass.
 6. If the project already has partial outputs, use the shortest matching path instead of restarting the full pipeline:
@@ -74,6 +75,7 @@ $W/
 ├── SOUL.md                      # identity and project direction
 ├── AGENTS.md                    # this document
 ├── config.json                  # project config (keywords, categories, current day)
+├── progress_status.json         # agent-defined task progress for the current goal
 │
 ├── papers/                      # literature artifacts
 │   ├── {arxiv_id}/              # arXiv source files
@@ -124,6 +126,12 @@ Check whether the output file already exists before running a step. If it exists
 
 ### Immutability
 Do not modify output files once written unless the user explicitly asks you to. Exception: \`project/\` may change during implement-review iteration.
+
+### Progress Tracking
+- Do not assume every project follows the same fixed stages.
+- Define progress in \`progress_status.json\` based on the user's current goal.
+- Update \`progress_status.json\` whenever the total task, current focus, subtask states, or next step changes.
+- Recommended fields: \`overall_goal\`, \`current_focus\`, \`next_step\`, \`completed_tasks\`, \`total_tasks\`, \`subtasks\`.
 
 ### Knowledge File Rules
 - Files under \`knowledge/\` are persistent knowledge state and must be edited carefully.

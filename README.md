@@ -250,6 +250,19 @@ openclaw gateway
 /ideas                 # 列出已生成想法
 ```
 
+## 中后段项目的快捷技能
+
+如果项目已经有一部分产物，不必总是从 `/metabolism` 或 `/research-survey` 重新开始。可以直接进入这些 skill：
+
+- `/write-paper`
+  - 适合：已经有 `experiment_res.md`、结果图或结果表，准备整理成 paper draft
+- `/artifact-review`
+  - 适合：已有 draft、README 更新或准备对外分享的 figures，想先做发布前审查
+- `/figure-standardize`
+  - 适合：图已经有了，但文件名、caption、单位、标签风格不统一
+- `/release-layout`
+  - 适合：项目已有成果，想把 README 或 release 入口改得更清楚、更适合外部阅读
+
 ---
 
 ## 已知限制

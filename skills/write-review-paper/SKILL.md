@@ -60,6 +60,8 @@ Create `review/reading_plan.md`:
 - [ ] ...
 ```
 
+Every entry must keep `paper_id` and the selection reason. Do not write a reading plan that only lists titles.
+
 ### 1.2 Reading Notes Template
 
 For each paper, create `review/notes/{paper_id}.md` using template in `references/note-template.md`.
@@ -75,10 +77,10 @@ Create `review/comparison.md`:
 ```markdown
 # Method Comparison
 
-| Paper | Year | Category | Key Innovation | Dataset | Metric | Result |
-|-------|------|----------|----------------|---------|--------|--------|
-| [A]   | 2023 | Data-driven | ... | ... | RMSE | 0.05 |
-| [B]   | 2022 | Hybrid | ... | ... | RMSE | 0.08 |
+| Paper | Year | Category | Key Innovation | Dataset | Metric | Result | Evidence / Source |
+|-------|------|----------|----------------|---------|--------|--------|-------------------|
+| [A]   | 2023 | Data-driven | ... | ... | RMSE | 0.05 | `review/notes/{paper_id}.md` |
+| [B]   | 2022 | Hybrid | ... | ... | RMSE | 0.08 | `review/notes/{paper_id}.md` |
 ```
 
 ### 2.2 Timeline Analysis
@@ -144,6 +146,8 @@ Create `review/draft.md` using template in `references/survey-template.md`.
 
 Key sections: Abstract → Introduction → Background → Taxonomy → Comparison → Datasets → Future Directions → Conclusion
 
+At the end of each major section, add one short summary sentence that clearly reflects the evidence already written in `review/notes/` or `review/comparison.md`.
+
 ### 3.2 Thesis Literature Review Template
 
 For a thesis chapter:
@@ -192,6 +196,8 @@ For a thesis chapter:
 3. **时态混乱** - 描述方法用现在时，描述实验结果用过去时
 4. **过度引用** - 不是每句话都需要引用
 5. **遗漏重要工作** - 确保覆盖领域的奠基性工作
+6. **Body text detached from notes** - Do not write conclusions into the draft unless they already appear in notes / comparison
+7. **Trend written as certainty** - When evidence is not stable, frame it as an observation or discussion rather than a firm conclusion
 
 ---
 

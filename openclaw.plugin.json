@@ -18,6 +18,10 @@
     "skills/research-collect",
     "skills/paper-download",
     "skills/write-review-paper",
+    "skills/write-paper",
+    "skills/artifact-review",
+    "skills/figure-standardize",
+    "skills/release-layout",
     "skills/metabolism"
   ]
 }

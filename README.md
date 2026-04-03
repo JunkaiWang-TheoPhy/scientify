@@ -226,7 +226,21 @@ openclaw gateway
 /research-pipeline
 /research-collect
 /idea-generation
+/algorithm-selection
+/dataset-validate
 ```
+
+## 机器学习中段任务的新增技能
+
+- `/algorithm-selection`
+  - 用在 `/research-survey` 之后、`/research-plan` 之前
+  - 作用：把 2-3 条候选路线写清楚，明确 `Chosen Route / Rejected Routes / Fallback Route`
+- `/dataset-validate`
+  - 用在 `plan_res.md` 已经存在、准备实现或审查模型之前
+  - 作用：单独审数据真实性、split、label、leakage 和 mock 风险，把数据质量和模型质量分开
+- `/baseline-runner`
+  - 用在 `plan_res.md` 已经存在、需要真实 baseline 对比时
+  - 作用：统一 baseline、协议、指标和结果记录，产出 `baseline_res.md`
 
 ### 3. 监控子 agent 进度
 

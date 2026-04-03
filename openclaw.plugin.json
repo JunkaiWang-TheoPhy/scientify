@@ -8,6 +8,9 @@
     "properties": {}
   },
   "skills": [
+    "skills/algorithm-selection",
+    "skills/baseline-runner",
+    "skills/dataset-validate",
     "skills/idea-generation",
     "skills/research-pipeline",
     "skills/research-survey",

@@ -13,21 +13,38 @@ You were just created as the research agent for project "${projectName}". Comple
 1. Greet the user, explain that you are the research agent for project "${projectName}", and ask them to describe the research direction.
 2. Based on the user's answer, extract:
    - core-domain keywords (3-5)
-   - suggested arXiv categories (for example \`cs.LG\`, \`cs.AI\`); leave empty if the topic is outside arXiv coverage
-   - preferred literature sources (\`arxiv\`, \`openalex\`, or both)
+   - suggested arXiv categories (for example "cs.LG", "cs.AI"); leave empty if the topic is outside arXiv coverage
+   - preferred literature sources ("arxiv", "openalex", or both)
 3. Discuss scope and priorities with the user, confirm the configuration, and accept adjustments.
 4. Once confirmed, write the following files:
-   - update \`SOUL.md\` with the project direction and domain fields
-   - generate \`config.json\` using the template below
-   - create \`progress_status.json\` for the current goal, including overall goal, current focus, next step, total tasks, completed tasks, and 3-7 subtasks
+   - update SOUL.md with the project direction and domain fields
+   - generate config.json using the template below
 5. Ask whether the user wants to run Day 0 immediately to build the initial knowledge state.
-   - If yes, run \`/metabolism\` to perform the first literature retrieval and knowledge-base construction pass.
-6. If the project already has partial outputs, use the shortest matching path instead of restarting the full pipeline:
-   - existing \`experiment_res.md\` plus figures -> \`/write-paper\`
-   - existing \`paper/draft.md\` -> \`/artifact-review\`
-   - existing figures with inconsistent captions or style -> \`/figure-standardize\`
-   - preparing \`README.md\` or release-facing docs -> \`/release-layout\` after a fresh release gate exists
-7. Delete this file (\`BOOTSTRAP.md\`) after the setup is complete.
+   - If yes, run /metabolism to perform the first literature retrieval and knowledge-base construction pass.
+6. If the project already has partial outputs, use the shortest matching path instead of restarting from Day 0:
+   - existing papers/ -> /research-survey
+   - existing survey_res.md, but route still undecided -> /algorithm-selection
+   - existing survey_res.md -> /research-plan
+   - existing plan_res.md, but data quality still needs review -> /dataset-validate
+   - existing plan_res.md, and matched baseline evidence is needed -> /baseline-runner
+   - existing implementation code -> /research-review
+   - existing review PASS -> /research-experiment
+   - existing experiment_res.md plus figures -> /write-paper
+   - existing paper/draft.md -> /artifact-review
+   - existing figures with inconsistent captions or style -> /figure-standardize
+   - preparing README.md or release-facing docs -> /release-layout after a fresh release gate exists
+7. After the initial setup, tell the user the recommended next command and expected output files, then delete this file (BOOTSTRAP.md).
+
+## Common Entry Paths
+
+- I only have a research direction and no materials yet -> finish setup, then run /metabolism
+- I already have a batch of papers -> run /research-survey
+- I finished the survey but have not chosen a model route -> run /algorithm-selection
+- I already have a plan and want to validate the data first -> run /dataset-validate
+- I already have a plan and want honest baseline numbers first -> run /baseline-runner
+- I already have implementation code -> run /research-review
+- I already have experiment results and figures -> run /write-paper
+- I already have a draft that needs review -> run /artifact-review
 
 ## config.json Template
 
@@ -49,7 +66,7 @@ You were just created as the research agent for project "${projectName}". Comple
 }
 
 export function renderSoulMd(projectName: string): string {
-  return `# Project Agent - ${projectName}
+  return `# Project Agent — ${projectName}
 
 You are the research agent for project "${projectName}".
 
@@ -154,7 +171,10 @@ Do not modify output files once written unless the user explicitly asks you to. 
 | /metabolism | Day 0: config.json, knowledge/ / Day 1+: papers/, knowledge/, ideas/hyp-*.md, log/ |
 | /research-collect | papers/ |
 | /research-survey | knowledge/, survey_res.md |
+| /algorithm-selection | selection_res.md |
 | /research-plan | plan_res.md |
+| /dataset-validate | data_validation.md |
+| /baseline-runner | baseline_res.md, experiments/baselines/ |
 | /research-implement | experiments/ |
 | /research-review | experiments/review/ |
 | /research-experiment | experiments/results/, experiment_res.md |
@@ -164,6 +184,18 @@ Do not modify output files once written unless the user explicitly asks you to. 
 | /artifact-review | review/artifact_review.md, review/release_checklist.md, review/release_gate.json |
 | /figure-standardize | reports/figures/figure_spec.md or project/figures/figure_spec.md |
 | /release-layout | README.md, docs/index.html, release-facing pages |
+
+## Common ML Midstream Paths
+
+- Survey exists but route choice is still unclear:
+  - run \`/algorithm-selection\`
+  - expected output: \`selection_res.md\`
+- Plan exists and the project needs a dedicated data-quality check:
+  - run \`/dataset-validate\`
+  - expected output: \`data_validation.md\`
+- Plan exists and the project needs honest comparison numbers:
+  - run \`/baseline-runner\`
+  - expected outputs: \`baseline_res.md\`, optional baseline artifacts under \`experiments/baselines/\`
 
 ## Writing and Release Entry Points
 

@@ -226,7 +226,21 @@ Or invoke a specific skill directly with a slash command:
 /research-pipeline
 /research-collect
 /idea-generation
+/algorithm-selection
+/dataset-validate
 ```
+
+## New Skills for Midstream ML Work
+
+- `/algorithm-selection`
+  - use this after `/research-survey` and before `/research-plan`
+  - purpose: make 2-3 candidate routes explicit and record `Chosen Route / Rejected Routes / Fallback Route`
+- `/dataset-validate`
+  - use this when `plan_res.md` already exists and you want to validate data quality before implementation or model review
+  - purpose: review data reality, splits, labels, leakage risk, and mock-data usage separately from model quality
+- `/baseline-runner`
+  - use this when `plan_res.md` already exists and the project needs real baseline comparisons
+  - purpose: standardize baselines, protocol, metrics, and result recording, then write `baseline_res.md`
 
 ### 3. Monitor sub-agent progress
 
@@ -262,7 +276,10 @@ Check status anytime:
 | **research-pipeline** | `/research-pipeline` | Orchestrator. Spawns sub-agents for each phase, verifies outputs between steps. |
 | **research-collect** | `/research-collect` | Search arXiv → filter → download .tex sources → cluster → generate survey report. |
 | **research-survey** | `/research-survey` | Deep analysis of papers: extract formulas, map to code, produce method comparison table. |
+| **algorithm-selection** | `/algorithm-selection` | Choose between 2-3 plausible ML routes, record rejected routes, and keep a fallback. |
 | **research-plan** | `/research-plan` | Create 4-part implementation plan (Dataset/Model/Training/Testing) from survey results. |
+| **dataset-validate** | `/dataset-validate` | Audit data reality, splits, labels, and leakage risk before model review. |
+| **baseline-runner** | `/baseline-runner` | Run or audit strong baselines under the same protocol before headline comparisons. |
 | **research-implement** | `/research-implement` | Implement ML code from plan, run 2-epoch validation with `uv` venv isolation. |
 | **research-review** | `/research-review` | Review implementation. Iterates fix → rerun → review up to 3 times. |
 | **research-experiment** | `/research-experiment` | Full training + ablation experiments. Requires review PASS. |

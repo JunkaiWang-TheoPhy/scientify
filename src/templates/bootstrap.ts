@@ -29,6 +29,10 @@ You were just created as the research agent for project "${projectName}". Comple
    - existing plan_res.md, and matched baseline evidence is needed -> /baseline-runner
    - existing implementation code -> /research-review
    - existing review PASS -> /research-experiment
+   - existing experiment_res.md plus figures -> /write-paper
+   - existing paper/draft.md -> /artifact-review
+   - existing figures with inconsistent captions or style -> /figure-standardize
+   - preparing README.md or release-facing docs -> /release-layout after a fresh release gate exists
 7. After the initial setup, tell the user the recommended next command and expected output files, then delete this file (BOOTSTRAP.md).
 
 ## Common Entry Paths
@@ -39,6 +43,8 @@ You were just created as the research agent for project "${projectName}". Comple
 - I already have a plan and want to validate the data first -> run /dataset-validate
 - I already have a plan and want honest baseline numbers first -> run /baseline-runner
 - I already have implementation code -> run /research-review
+- I already have experiment results and figures -> run /write-paper
+- I already have a draft that needs review -> run /artifact-review
 
 ## config.json Template
 
@@ -86,6 +92,7 @@ $W/
 ├── SOUL.md                      # identity and project direction
 ├── AGENTS.md                    # this document
 ├── config.json                  # project config (keywords, categories, current day)
+├── progress_status.json         # agent-defined task progress for the current goal
 │
 ├── papers/                      # literature artifacts
 │   ├── {arxiv_id}/              # arXiv source files
@@ -99,10 +106,20 @@ $W/
 │   ├── hyp-*.md                 # generated hypotheses
 │   └── selected_idea.md         # selected research idea
 │
-├── experiments/                 # experiment code
+├── experiments/                 # experiment code and assets
 │   ├── run.py                   # entry script
 │   ├── requirements.txt
 │   └── results/                 # experiment outputs
+│
+├── review/                      # review, audit, and writing outputs
+├── paper/                       # experiment-driven paper outputs
+│   ├── manuscript.tex           # top-level LaTeX entry
+│   ├── build_paper.sh           # PDF build script
+│   ├── references.bib           # bibliography placeholder
+│   ├── sections/                # section-by-section TeX drafts
+│   ├── figures/                 # paper-local figures
+│   ├── assets/                  # supporting assets for paper generation
+│   └── build/                   # PDF, logs, and build errors
 │
 ├── log/                         # run logs
 │   └── {YYYY-MM-DD}.md
@@ -126,6 +143,12 @@ Check whether the output file already exists before running a step. If it exists
 
 ### Immutability
 Do not modify output files once written unless the user explicitly asks you to. Exception: \`project/\` may change during implement-review iteration.
+
+### Progress Tracking
+- Do not assume every project follows the same fixed stages.
+- Define progress in \`progress_status.json\` based on the user's current goal.
+- Update \`progress_status.json\` whenever the total task, current focus, subtask states, or next step changes.
+- Recommended fields: \`overall_goal\`, \`current_focus\`, \`next_step\`, \`completed_tasks\`, \`total_tasks\`, \`subtasks\`.
 
 ### Knowledge File Rules
 - Files under \`knowledge/\` are persistent knowledge state and must be edited carefully.
@@ -154,9 +177,13 @@ Do not modify output files once written unless the user explicitly asks you to. 
 | /baseline-runner | baseline_res.md, experiments/baselines/ |
 | /research-implement | experiments/ |
 | /research-review | experiments/review/ |
-| /research-experiment | experiments/results/ |
+| /research-experiment | experiments/results/, experiment_res.md |
 | /idea-generation | ideas/ |
 | /write-review-paper | review/ |
+| /write-paper | paper/claim_inventory.md, paper/figures_manifest.md, paper/draft.md, paper/manuscript.tex, paper/build/manuscript.pdf |
+| /artifact-review | review/artifact_review.md, review/release_checklist.md, review/release_gate.json |
+| /figure-standardize | reports/figures/figure_spec.md or project/figures/figure_spec.md |
+| /release-layout | README.md, docs/index.html, release-facing pages |
 
 ## Common ML Midstream Paths
 
@@ -169,5 +196,23 @@ Do not modify output files once written unless the user explicitly asks you to. 
 - Plan exists and the project needs honest comparison numbers:
   - run \`/baseline-runner\`
   - expected outputs: \`baseline_res.md\`, optional baseline artifacts under \`experiments/baselines/\`
+
+## Writing and Release Entry Points
+
+Use these entry points when the project already has partial outputs and does not need to restart the full research pipeline:
+
+- If you already have \`experiment_res.md\` and one or more result figures:
+  - run \`/write-paper\`
+  - expected outputs: \`paper/claim_inventory.md\`, \`paper/figures_manifest.md\`, \`paper/draft.md\`, \`paper/manuscript.tex\`, \`paper/build/manuscript.pdf\`
+- If you already have \`paper/draft.md\` or another draft artifact that is about to be shared:
+  - run \`/artifact-review\`
+  - expected outputs: \`review/artifact_review.md\`, \`review/release_checklist.md\`, \`review/release_gate.json\`
+- If you already have figures but their style, captioning, units, or evidence labels are inconsistent:
+  - run \`/figure-standardize\`
+  - expected outputs: figure specs, caption updates, and standardized release-facing figures
+- If you are preparing a \`README.md\` or release-facing page for sharing:
+  - run \`/release-layout\`
+  - expected outputs: README updates, docs landing-page updates, and clearer release entry surfaces
+  - do this only after \`/artifact-review\` has produced a fresh release gate for the current artifacts
 `;
 }

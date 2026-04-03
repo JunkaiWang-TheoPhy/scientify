@@ -18,7 +18,7 @@ import { handleMetabolismStatus } from "./src/commands/metabolism-status.js";
 export default definePluginEntry({
   id: "scientify",
   name: "Scientify",
-  description: "AI-powered research workflow automation with continuous knowledge metabolism",
+  description: "Continuous AI research workflow for survey, planning, implementation, review, experimentation, and writing",
   register(api) {
     // Register tools
     api.registerTool(createArxivSearchTool());

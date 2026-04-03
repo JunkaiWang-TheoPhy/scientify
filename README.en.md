@@ -284,6 +284,10 @@ Check status anytime:
 | **research-review** | `/research-review` | Review implementation. Iterates fix → rerun → review up to 3 times. |
 | **research-experiment** | `/research-experiment` | Full training + ablation experiments. Requires review PASS. |
 | **idea-generation** | `/idea-generation` | Generate 5 innovative research ideas from a topic, select and enhance the best one. |
+| **write-paper** | `/write-paper` | Draft a result-driven paper or technical report from experiment artifacts. |
+| **artifact-review** | `/artifact-review` | Review a draft, README, or figure set before external sharing. |
+| **figure-standardize** | `/figure-standardize` | Normalize figure filenames, captions, labels, and reuse metadata. |
+| **release-layout** | `/release-layout` | Repackage existing artifacts into a clearer README or release entry surface. |
 
 </details>
 
@@ -323,7 +327,6 @@ Check status anytime:
 | `/papers` | List downloaded papers with metadata |
 | `/ideas` | List generated ideas |
 | `/projects` | List all projects |
-| `/project-switch <id>` | Switch active project |
 | `/project-delete <id>` | Delete a project |
 | `/research-subscribe ...` | Create/update scheduled Scientify jobs |
 | `/research-subscriptions` | Show your scheduled Scientify jobs |

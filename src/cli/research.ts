@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { renderBootstrapMd, renderSoulMd, renderAgentsMd } from "../templates/bootstrap.js";
+import { formatReleaseGateStatus, getReleaseGateNextStep, hasReleaseFacingArtifacts, readReleaseGateStatus } from "../release-gate.js";
 
 const OPENCLAW_HOME = path.join(os.homedir(), ".openclaw");
 const OPENCLAW_CONFIG = path.join(OPENCLAW_HOME, "openclaw.json");
@@ -104,6 +105,24 @@ function findPluginSkillsDir(entryDir: string): string {
   return path.join(entryDir, "skills");
 }
 
+function copyDirectoryContents(src: string, dst: string): void {
+  if (!fs.existsSync(src)) return;
+
+  fs.mkdirSync(dst, { recursive: true });
+
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const dstPath = path.join(dst, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectoryContents(srcPath, dstPath);
+      continue;
+    }
+
+    fs.copyFileSync(srcPath, dstPath);
+  }
+}
+
 function listResearchProjects(): ResearchProject[] {
   const config = readOpenClawConfig();
   const agents = (config.agents as { list?: Array<{ id: string; workspace?: string }> })?.list ?? [];
@@ -157,6 +176,12 @@ function initProject(id: string, pluginSkillsDir: string): void {
     path.join(workspace, "knowledge"),
     path.join(workspace, "ideas"),
     path.join(workspace, "experiments"),
+    path.join(workspace, "paper"),
+    path.join(workspace, "paper", "sections"),
+    path.join(workspace, "paper", "figures"),
+    path.join(workspace, "paper", "build"),
+    path.join(workspace, "paper", "assets"),
+    path.join(workspace, "review"),
     path.join(workspace, "log"),
     path.join(workspace, "skills", "metabolism"),
   ];
@@ -176,6 +201,15 @@ function initProject(id: string, pluginSkillsDir: string): void {
     fs.copyFileSync(srcSkill, dstSkill);
   } else {
     console.warn(`Warning: metabolism SKILL.md not found at ${srcSkill}`);
+  }
+
+  // 3b. Copy paper starter bundle from write-paper references
+  const srcLatexBundle = path.join(pluginSkillsDir, "write-paper", "references", "latex");
+  const dstPaperDir = path.join(workspace, "paper");
+  if (fs.existsSync(srcLatexBundle)) {
+    copyDirectoryContents(srcLatexBundle, dstPaperDir);
+  } else {
+    console.warn(`Warning: LaTeX starter bundle not found at ${srcLatexBundle}`);
   }
 
   // 4. Modify openclaw.json
@@ -238,6 +272,17 @@ function showStatus(id: string): void {
   console.log(`  Day:        ${project.currentDay}`);
   console.log(`  Topics:     ${topicCount}`);
   console.log(`  Hypotheses: ${hypothesisCount}`);
+  const gateStatus = readReleaseGateStatus(project.workspace);
+  if (hasReleaseFacingArtifacts(project.workspace) || gateStatus.state !== "missing") {
+    console.log(`  Release:    ${formatReleaseGateStatus(gateStatus)}`);
+    if (gateStatus.state === "stale" && gateStatus.staleReasons.length > 0) {
+      console.log(`  Gate Note:  ${gateStatus.staleReasons[0]}`);
+    }
+    const nextStep = getReleaseGateNextStep(project.workspace, gateStatus);
+    if (nextStep) {
+      console.log(`  Next:       ${nextStep}`);
+    }
+  }
   if (project.createdAt) {
     console.log(`  Created:    ${project.createdAt}`);
   }

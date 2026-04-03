@@ -172,13 +172,11 @@ After `openclaw gateway`, the WebUI is available at **http://127.0.0.1:18789/** 
 
 ## Install Scientify
 
-### From npm (recommended)
-
 ```bash
-openclaw plugins install scientify
+openclaw plugins install "$(npm pack scientify)"
 ```
 
-The plugin installs to `~/.openclaw/extensions/scientify/` and is automatically enabled.
+The plugin installs to `~/.openclaw/extensions/` and is automatically enabled.
 
 ### From source (development)
 
@@ -194,7 +192,7 @@ openclaw plugins install -l ./
 
 ```bash
 openclaw plugins list
-# Should show: scientify (enabled)
+# Should show: Scientify (loaded)
 ```
 
 After installation, **restart the gateway** to load the plugin:

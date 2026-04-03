@@ -172,18 +172,16 @@ openclaw gateway
 
 ## 安装 Scientify
 
-### 从 npm 安装（推荐）
-
 ```bash
-openclaw plugins install scientify
+openclaw plugins install "$(npm pack scientify)"
 ```
 
-插件安装到 `~/.openclaw/extensions/scientify/`，自动启用。
+插件安装到 `~/.openclaw/extensions/`，自动启用。
 
 ### 从源码安装（开发用）
 
 ```bash
-git clone https://github.com/user/scientify.git
+git clone https://github.com/tsingyuai/scientify.git
 cd scientify && pnpm install && pnpm build
 
 # 链接为开发插件
@@ -194,7 +192,7 @@ openclaw plugins install -l ./
 
 ```bash
 openclaw plugins list
-# 应显示: scientify (enabled)
+# 应显示: Scientify (loaded)
 ```
 
 安装后需 **重启 Gateway** 以加载插件：

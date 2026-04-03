@@ -226,7 +226,21 @@ openclaw gateway
 /research-pipeline
 /research-collect
 /idea-generation
+/algorithm-selection
+/dataset-validate
 ```
+
+## 机器学习中段任务的新增技能
+
+- `/algorithm-selection`
+  - 用在 `/research-survey` 之后、`/research-plan` 之前
+  - 作用：把 2-3 条候选路线写清楚，明确 `Chosen Route / Rejected Routes / Fallback Route`
+- `/dataset-validate`
+  - 用在 `plan_res.md` 已经存在、准备实现或审查模型之前
+  - 作用：单独审数据真实性、split、label、leakage 和 mock 风险，把数据质量和模型质量分开
+- `/baseline-runner`
+  - 用在 `plan_res.md` 已经存在、需要真实 baseline 对比时
+  - 作用：统一 baseline、协议、指标和结果记录，产出 `baseline_res.md`
 
 ### 3. 监控子 agent 进度
 
@@ -249,6 +263,19 @@ openclaw gateway
 /papers                # 列出已下载论文
 /ideas                 # 列出已生成想法
 ```
+
+## 中后段项目的快捷技能
+
+如果项目已经有一部分产物，不必总是从 `/metabolism` 或 `/research-survey` 重新开始。可以直接进入这些 skill：
+
+- `/write-paper`
+  - 适合：已经有 `experiment_res.md`、结果图或结果表，准备整理成 paper draft
+- `/artifact-review`
+  - 适合：已有 draft、README 更新或准备对外分享的 figures，想先做发布前审查
+- `/figure-standardize`
+  - 适合：图已经有了，但文件名、caption、单位、标签风格不统一
+- `/release-layout`
+  - 适合：项目已有成果，想把 README 或 release 入口改得更清楚、更适合外部阅读
 
 ---
 

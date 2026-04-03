@@ -1,13 +1,16 @@
 {
   "id": "scientify",
   "name": "Scientify",
-  "description": "AI-powered research workflow automation for OpenClaw",
+  "description": "Continuous AI research workflow for survey, planning, implementation, review, experimentation, and writing",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {}
   },
   "skills": [
+    "skills/algorithm-selection",
+    "skills/baseline-runner",
+    "skills/dataset-validate",
     "skills/idea-generation",
     "skills/research-pipeline",
     "skills/research-survey",

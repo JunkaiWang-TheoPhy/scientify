@@ -18,7 +18,7 @@ import { handleMetabolismStatus } from "./src/commands/metabolism-status.js";
 const scientifyPlugin = {
   id: "scientify",
   name: "Scientify",
-  description: "AI-powered research workflow automation with continuous knowledge metabolism",
+  description: "Continuous AI research workflow for survey, planning, implementation, review, experimentation, and writing",
   register(api: OpenClawPluginApi) {
     // Register tools
     api.registerTool(createArxivSearchTool());

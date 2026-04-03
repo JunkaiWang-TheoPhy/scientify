@@ -11,6 +11,25 @@ interface ResearchAgent {
   workspace: string;
 }
 
+interface ProjectSnapshot {
+  hasConfig: boolean;
+  hasSurvey: boolean;
+  hasSelection: boolean;
+  hasPlan: boolean;
+  hasDataValidation: boolean;
+  hasBaseline: boolean;
+  hasImplementationReport: boolean;
+  latestReviewVerdict: "PASS" | "NEEDS_REVISION" | "NEEDS_ALGORITHM_REVIEW" | "BLOCKED" | "MISSING" | "UNKNOWN";
+  hasExperiment: boolean;
+}
+
+interface NextActionState {
+  stage: string;
+  command: string;
+  expectedOutputs: string[];
+  reason: string;
+}
+
 /**
  * List all research agents from openclaw.json.
  */
@@ -39,6 +58,158 @@ function countFiles(dirPath: string, filter?: (name: string) => boolean): number
   }
 }
 
+function fileExists(filePath: string): boolean {
+  try {
+    return fs.existsSync(filePath);
+  } catch {
+    return false;
+  }
+}
+
+function readLatestReviewVerdict(workspace: string): ProjectSnapshot["latestReviewVerdict"] {
+  const iterationsDir = path.join(workspace, "iterations");
+  if (!fileExists(iterationsDir)) return "MISSING";
+
+  try {
+    const files = fs.readdirSync(iterationsDir)
+      .filter((f) => /^judge_v\d+\.md$/.test(f))
+      .sort((a, b) => {
+        const na = Number(a.match(/\d+/)?.[0] ?? "0");
+        const nb = Number(b.match(/\d+/)?.[0] ?? "0");
+        return nb - na;
+      });
+
+    const latest = files[0];
+    if (!latest) return "MISSING";
+
+    const content = fs.readFileSync(path.join(iterationsDir, latest), "utf-8");
+    const verdictMatch = content.match(/##\s+Verdict:\s+([A-Z_]+)/);
+    const verdict = verdictMatch?.[1] as ProjectSnapshot["latestReviewVerdict"] | undefined;
+    return verdict ?? "UNKNOWN";
+  } catch {
+    return "UNKNOWN";
+  }
+}
+
+function buildProjectSnapshot(workspace: string): ProjectSnapshot {
+  return {
+    hasConfig: fileExists(path.join(workspace, "config.json")),
+    hasSurvey: fileExists(path.join(workspace, "survey_res.md")),
+    hasSelection: fileExists(path.join(workspace, "selection_res.md")),
+    hasPlan: fileExists(path.join(workspace, "plan_res.md")),
+    hasDataValidation: fileExists(path.join(workspace, "data_validation.md")),
+    hasBaseline: fileExists(path.join(workspace, "baseline_res.md")),
+    hasImplementationReport: fileExists(path.join(workspace, "ml_res.md")),
+    latestReviewVerdict: readLatestReviewVerdict(workspace),
+    hasExperiment: fileExists(path.join(workspace, "experiment_res.md")),
+  };
+}
+
+function inferNextAction(snapshot: ProjectSnapshot): NextActionState {
+  if (!snapshot.hasConfig) {
+    return {
+      stage: "Bootstrap pending",
+      command: "complete BOOTSTRAP configuration",
+      expectedOutputs: ["config.json", "SOUL.md"],
+      reason: "The project is missing its base configuration, so later survey, selection, and experiment steps do not yet share a stable direction.",
+    };
+  }
+
+  if (!snapshot.hasSurvey) {
+    return {
+      stage: "Survey needed",
+      command: "/research-survey",
+      expectedOutputs: ["knowledge/", "survey_res.md"],
+      reason: "There is no deep survey result yet, so route selection and implementation would be premature.",
+    };
+  }
+
+  if (!snapshot.hasSelection && !snapshot.hasPlan) {
+    return {
+      stage: "Route selection",
+      command: "/algorithm-selection",
+      expectedOutputs: ["selection_res.md"],
+      reason: "A survey exists, but the project has not yet narrowed candidate approaches into Chosen / Rejected / Fallback routes.",
+    };
+  }
+
+  if (!snapshot.hasPlan) {
+    return {
+      stage: "Planning",
+      command: "/research-plan",
+      expectedOutputs: ["plan_res.md"],
+      reason: "The project still needs a concrete Dataset / Model / Training / Testing plan before implementation.",
+    };
+  }
+
+  if (!snapshot.hasDataValidation) {
+    return {
+      stage: "Dataset validation",
+      command: "/dataset-validate",
+      expectedOutputs: ["data_validation.md"],
+      reason: "Data reality, splits, labels, and leakage risk should be reviewed separately before judging model quality.",
+    };
+  }
+
+  if (!snapshot.hasBaseline) {
+    return {
+      stage: "Baseline setup",
+      command: "/baseline-runner",
+      expectedOutputs: ["baseline_res.md", "experiments/baselines/"],
+      reason: "The project still lacks baseline results under a matched protocol, so headline comparisons would be too early.",
+    };
+  }
+
+  if (!snapshot.hasImplementationReport) {
+    return {
+      stage: "Implementation",
+      command: "/research-implement",
+      expectedOutputs: ["project/", "ml_res.md"],
+      reason: "The route, plan, data check, and baseline contract are already in place, so the next step is implementation plus 2-epoch validation.",
+    };
+  }
+
+  if (snapshot.latestReviewVerdict !== "PASS") {
+    return {
+      stage: "Review",
+      command: "/research-review",
+      expectedOutputs: ["iterations/judge_v{N}.md"],
+      reason: "Implementation exists, but review has not yet reached PASS, so model quality still needs a dedicated review pass.",
+    };
+  }
+
+  if (!snapshot.hasExperiment) {
+    return {
+      stage: "Full experiment",
+      command: "/research-experiment",
+      expectedOutputs: ["experiment_res.md", "experiment_analysis/"],
+      reason: "Implementation and review are ready, so the next step is full training, ablations, and supplementary experiments.",
+    };
+  }
+
+  return {
+    stage: "Experiment complete",
+    command: "/write-review-paper",
+    expectedOutputs: ["review/"],
+    reason: "The core ML execution chain is complete, so the project can move into synthesis, survey writing, or outward-facing summaries.",
+  };
+}
+
+function formatArtifactPresence(snapshot: ProjectSnapshot): string {
+  const items = [
+    ["survey", snapshot.hasSurvey],
+    ["selection", snapshot.hasSelection],
+    ["plan", snapshot.hasPlan],
+    ["data_validation", snapshot.hasDataValidation],
+    ["baseline", snapshot.hasBaseline],
+    ["implement", snapshot.hasImplementationReport],
+    ["review", snapshot.latestReviewVerdict === "PASS"],
+    ["experiment", snapshot.hasExperiment],
+  ];
+
+  return items.map(([label, ok]) => `${ok ? "yes" : "no"} ${label}`).join(" | ");
+}
+
 /**
  * /research-status - Show workspace status for all research agents
  */
@@ -59,6 +230,8 @@ export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandR
     const ideasCount = countFiles(path.join(w, "ideas"), (f) => f.endsWith(".md"));
     const topicCount = countFiles(path.join(w, "knowledge"), (f) => f.startsWith("topic-"));
     const hypothesisCount = countFiles(path.join(w, "ideas"), (f) => f.startsWith("hyp-"));
+    const snapshot = buildProjectSnapshot(w);
+    const next = inferNextAction(snapshot);
 
     let currentDay = 0;
     try {
@@ -69,6 +242,11 @@ export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandR
     output += `**${projectId}** (Day ${currentDay})\n`;
     output += `  Workspace: \`${w}\`\n`;
     output += `  Topics: ${topicCount} | Hypotheses: ${hypothesisCount} | Papers: ${papersCount} | Ideas: ${ideasCount}\n`;
+    output += `  Stage: ${next.stage}\n`;
+    output += `  Artifacts: ${formatArtifactPresence(snapshot)}\n`;
+    output += `  Next: \`${next.command}\`\n`;
+    output += `  Why: ${next.reason}\n`;
+    output += `  Expected: ${next.expectedOutputs.map((p) => `\`${p}\``).join(", ")}\n`;
     const gateStatus = readReleaseGateStatus(w);
     if (hasReleaseFacingArtifacts(w) || gateStatus.state !== "missing") {
       output += `  Release Gate: ${formatReleaseGateStatus(gateStatus)}\n`;
@@ -77,7 +255,7 @@ export function handleResearchStatus(_ctx: PluginCommandContext): PluginCommandR
       }
       const nextStep = getReleaseGateNextStep(w, gateStatus);
       if (nextStep) {
-        output += `  Next: ${nextStep}\n`;
+        output += `  Release Next: ${nextStep}\n`;
       }
     }
     output += `\n`;

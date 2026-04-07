@@ -1,6 +1,6 @@
 {
   "name": "scientify",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "description": "Scientify - AI-powered research workflow automation for OpenClaw. Includes idea generation, literature review, research pipeline skills, and arxiv tool.",
   "type": "module",
   "main": "dist/index.js",
@@ -61,6 +61,14 @@
   "openclaw": {
     "extensions": [
       "./dist/index.js"
-    ]
+    ],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.4.2",
+      "pluginSdkVersion": "2026.3.24-beta.2"
+    }
   }
 }

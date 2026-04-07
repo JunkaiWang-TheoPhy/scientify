@@ -16,7 +16,7 @@ import { registerResearchCli } from "./src/cli/research.js";
 import { handleMetabolismStatus } from "./src/commands/metabolism-status.js";
 
 export default definePluginEntry({
-  id: "scientify",
+  id: "scientify-tsingyuai",
   name: "Scientify",
   description: "Continuous AI research workflow for survey, planning, implementation, review, experimentation, and writing",
   register(api) {

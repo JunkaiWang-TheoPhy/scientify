@@ -1,3 +1,15 @@
+## [3.2.0](https://github.com/tsingyuai/scientify/compare/v3.1.0...v3.2.0) (2026-04-03)
+
+### Features
+
+* publish to ClawHub as scientify-tsingyuai, update install command ([3b4451a](https://github.com/tsingyuai/scientify/commit/3b4451aa33f67cc80481260a58097c36b754c7a1))
+
+## [3.1.0](https://github.com/tsingyuai/scientify/compare/v3.0.0...v3.1.0) (2026-04-03)
+
+### Features
+
+* add diversity-oriented ML workflow skills ([#5](https://github.com/tsingyuai/scientify/issues/5)) ([962e9a9](https://github.com/tsingyuai/scientify/commit/962e9a9ab12c09f0dad6eca6e630821a5736e6bf))
+
 ## [3.0.0](https://github.com/tsingyuai/scientify/compare/v2.1.0...v3.0.0) (2026-03-30)
 
 ### ⚠ BREAKING CHANGES
